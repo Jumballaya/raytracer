@@ -1,26 +1,21 @@
+/***
+ *
+ * Scene script parser
+ *
+ * @TODO - Refactor this parser into better functions:
+ *
+ *      - Top-level parser (Value, Object, Camera, etc.)
+ *      - Identifier parser (using a variable)
+ *      - Literals parser (creating a literal with/without a name)
+ *      - Fields parser (e.g. lookfrom/lookat in Camera)
+ *
+ */
 #ifndef PARSER_H
 #define PARSER_H
 
 #include "lexer.h"
-#include "ast.h"
+#include "program.h"
 #include "file.h"
-
-enum precedences {
-  P_LOWEST,
-  P_BLOCK,
-  P_PAREN
-};
-
-int lookupPrecedence(TokenType tt) {
-  switch (tt) {
-    case TOK_LPAREN:
-      return P_PAREN;
-    case TOK_LBRACE:
-      return P_BLOCK;
-    default:
-      return P_LOWEST;
-  }
-}
 
 class Parser {
   public:
@@ -59,20 +54,17 @@ class Parser {
       return false;
     };
 
-    // Precedence
-    int peekPrecedence() { return lookupPrecedence(peekToken.type); }
-    int curPrecedence() { return lookupPrecedence(curToken.type); }
-
     // Parse
     Program parseProgram();
 
     bool getFloat(float& f, Program prog);
     bool getIdent(std::string& ident);
     bool getVec3(Vec3& v, Program prog);
-    bool getMaterial(std::string ident, Material& m, Program prog);
-    bool getTexture(std::string ident, Texture& t, Program prog);
-    bool getSphere(std::string ident, Sphere& s, Program prog);
+    bool getMaterial(Material& m, Program prog);
+    bool getTexture(Texture& t, Program prog);
+    bool getSphere(Sphere& s, Program prog);
 
+    // Parse top-level parsing
     void parseMacro(Program prog);
     void parseValue(Program prog);
     void parseFloat(Program prog);
@@ -80,11 +72,24 @@ class Parser {
     void parseCamera(Program prog);
     void parseTexture(Program prog);
     void parseMaterial(Program prog);
-    void parseSphere(Program prog);
     void parseVec3(Program prog);
 
+    // Parse second-level
+    void parseSphere(Program prog);
     void parseConstant(Program prog);
     void parseLambertian(Program prog);
+
+    // Parse Fields
+    bool parseFloatField(std::string ident, float& f, Program prog);
+    bool parseVec3Field(std::string ident, Vec3& v, Program prog);
+    bool parseMaterialField(std::string ident, Material& m, Program prog);
+    bool parseTextureField(std::string ident, Texture& t, Program prog);
+
+    // Parse Literal
+    void parseVec3Literal(Vec3& v);
+    void parseFloatLiteral(float& f);
+    void parseTextureLiteral(Texture& t);
+    void parseMaterialLiteral(Material& m);
 };
 
 void Parser::advanceToken() {
@@ -209,13 +214,11 @@ bool Parser::getIdent(std::string& ident) {
   return false;
 }
 
-//Vec3 { 0; 0; 0; }
 bool Parser::getVec3(Vec3& v, Program prog) {
   if (peekTokenIs(TOK_IDENT) || peekTokenIs(TOK_NUMBER)) {
     if (peekTokenIs(TOK_IDENT)) {
       nextToken();
-      prog.env.getVec3(curToken.literal, v);
-      return true;
+      return prog.env.getVec3(curToken.literal, v);
     } else if (peekTokenIs(TOK_VEC3)) {
       nextToken();
       if (expectPeek(TOK_LBRACE)) {
@@ -238,10 +241,28 @@ bool Parser::getVec3(Vec3& v, Program prog) {
   return false;
 }
 
+//Value : Material : Lambertian(sphere_material) {
+  //Albedo: sphere_texture;
+//}
+bool Parser::getMaterial(Material& m, Program prog) {
+  if (peekTokenIs(TOK_IDENT)) {
+    nextToken();
+    return prog.env.getMaterial(curToken.literal, m);
+  }
+  if (peekTokenIs(TOK_MATERIAL)) {
+    parseMaterialLiteral(m);
+    return true;
+  }
+  return false;
+}
+
 //void Parser::parseVec3Literal(Vec3& v) {};
 //void Parser::parseFloatLiteral(float& f) {};
 //void Parser::parseTextureLiteral(Texture& t) {};
-//void Parser::parseMaterialLiteral(Material& t) {};
+void Parser::parseMaterialLiteral(Material& m) {
+  if (expectPeek(TOK_COLON)) {
+  }
+};
 
 void Parser::parseFloat(Program prog) {
   std::string ident;
@@ -334,7 +355,7 @@ bool Parser::parseFloatField(std::string ident, float& f, Program prog) {
   }
 }
 
-bool Parser::parseVec3Field(std::string ident, Vec3& v) {
+bool Parser::parseVec3Field(std::string ident, Vec3& v, Program prog) {
   if (curTokenIs(TOK_IDENT) && curToken.literal.compare(ident) == 0) {
     if (expectPeek(TOK_COLON)) {
       nextToken();
@@ -344,9 +365,17 @@ bool Parser::parseVec3Field(std::string ident, Vec3& v) {
   }
 }
 
-bool Parser::parseMaterialField(std::string ident, Material& m) {}
+bool Parser::parseMaterialField(std::string ident, Material& m, Program prog) {
+  if (curTokenIs(TOK_IDENT) && curToken.literal.compare(ident) == 0) {
+    if (expectPeek(TOK_COLON)) {
+      nextToken();
+      getMaterial(m, prog);
+      expectPeek(TOK_SEMICOLON);
+    }
+  }
+}
 
-bool Parser::parseTextureField(std::string ident, Texture& t) {}
+bool Parser::parseTextureField(std::string ident, Texture& t, Program prog) {}
 
 void Parser::parseSphere(Program prog) {
   float radius;
@@ -357,9 +386,9 @@ void Parser::parseSphere(Program prog) {
   if (getIdent(ident)) {
     if (expectPeek(TOK_RPAREN) && expectPeek(TOK_LBRACE)) {
       while (curToken.type != TOK_RBRACE) {
-        parseFloatField("Radius", radius);
-        parseVec3Field("Center", center);
-        parseMaterialField("Material", m);
+        parseFloatField(std::string("Radius"), radius, prog);
+        parseVec3Field(std::string("Center"), center, prog);
+        parseMaterialField(std::string("Material"), *m, prog);
       }
     }
   }
@@ -378,12 +407,12 @@ void Parser::parseCamera(Program prog) {
 
   // Parse
   while (curToken.type != TOK_RBRACE) {
-    parseVec3Field("Lookfrom", lookfrom);
-    parseVec3Field("Lookat", lookat);
-    parseVec3Field("Vup", vup);
-    parseFloatField("Vfov", vfov);
-    parseFloatField("Aperature", aperature);
-    parseFloatField("Focus", focus);
+    parseVec3Field(std::string("Lookfrom"), lookfrom, prog);
+    parseVec3Field(std::string("Lookat"), lookat, prog);
+    parseVec3Field(std::string("Vup"), vup, prog);
+    parseFloatField(std::string("Vfov"), vfov, prog);
+    parseFloatField(std::string("Aperature"), aperature, prog);
+    parseFloatField(std::string("Focus"), focus, prog);
   }
   nextToken();
 

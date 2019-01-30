@@ -1,10 +1,18 @@
-#ifndef AST_H
-#define AST_H
+/***
+ *
+ *
+ * Scene Script Program
+ *
+ *
+ */
+#ifndef PROGRAM_H
+#define PROGRAM_H
 
 #include <string.h>
 
 #include "tokens.h"
 #include "environment.h"
+
 #include "raytracer/scene.h"
 #include "raytracer/camera.h"
 #include "raytracer/hitable_list.h"

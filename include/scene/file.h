@@ -1,3 +1,10 @@
+/***
+ *
+ *
+ * Scene Script File Reader
+ *
+ *
+ */
 #include <fstream>
 #include <string>
 #include <iostream>

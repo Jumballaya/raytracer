@@ -1,3 +1,10 @@
+/***
+ *
+ *
+ * Scene Script Tokens
+ *
+ *
+ */
 #ifndef TOKENS_H
 #define TOKENS_H
 
@@ -44,15 +51,6 @@ class Token {
 
     TokenType   type;
     std::string literal;
-};
-
-static const char * const macros[] = {
-  "start_time",
-  "end_time",
-  "set_nx",
-  "set_ny",
-  "set_ns",
-  "lights"
 };
 
 TokenType lookupIdent(std::string literal) {
