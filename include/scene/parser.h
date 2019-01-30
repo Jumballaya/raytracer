@@ -256,11 +256,15 @@ bool Parser::getMaterial(Material& m, Program prog) {
   return false;
 }
 
+// @TODO -- implement
 //void Parser::parseVec3Literal(Vec3& v) {};
 //void Parser::parseFloatLiteral(float& f) {};
 //void Parser::parseTextureLiteral(Texture& t) {};
+
+// @TODO -- implement
 void Parser::parseMaterialLiteral(Material& m) {
   if (expectPeek(TOK_COLON)) {
+    // @TODO -- Implement a parseLambertianLiteral
   }
 };
 
@@ -375,6 +379,7 @@ bool Parser::parseMaterialField(std::string ident, Material& m, Program prog) {
   }
 }
 
+// @TODO -- implement
 bool Parser::parseTextureField(std::string ident, Texture& t, Program prog) {}
 
 void Parser::parseSphere(Program prog) {
