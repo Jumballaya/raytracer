@@ -90,8 +90,8 @@ Token Lexer::nextToken() {
 
   if (cur == '}') tok = Token(TOK_RBRACE, "}");
   else if (cur == '{') tok = Token(TOK_LBRACE, "{");
-  else if (cur == '(') tok = Token(TOK_RPAREN, "(");
-  else if (cur == ')') tok = Token(TOK_LPAREN, ")");
+  else if (cur == '(') tok = Token(TOK_LPAREN, "(");
+  else if (cur == ')') tok = Token(TOK_RPAREN, ")");
   else if (cur == ':') tok = Token(TOK_COLON, ":");
   else if (cur == ';') tok = Token(TOK_SEMICOLON, ";");
   else if (cur == '.') tok = Token(TOK_DOT, ".");

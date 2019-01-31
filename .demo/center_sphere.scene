@@ -12,7 +12,7 @@
 % end_time 1
 % set_nx 800
 % set_ny 400
-% set_ns 10
+% set_ns 30
 % lights 0
 
 Value : Float(ten) { 10; }

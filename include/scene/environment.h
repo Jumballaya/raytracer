@@ -9,9 +9,10 @@
 #define ENVIRONMENT_H
 
 #include <iostream>
+#include <stdlib.h>
 
 #include "raytracer/vec.h"
-#include "raytracer/sphere.h"
+#include "raytracer/hitable.h"
 #include "raytracer/material.h"
 #include "raytracer/texture.h"
 
@@ -35,13 +36,13 @@ struct vec3_list {
   int       len;
 };
 
-struct sphere_pair {
+struct object_pair {
   std::string ident;
-  Sphere      *value;
+  Hitable     *value;
 };
 
-struct sphere_list {
-  sphere_pair *pairs;
+struct object_list {
+  object_pair *pairs;
   int         len;
 };
 
@@ -68,28 +69,39 @@ struct texture_list {
 class Environment {
   public:
     Environment() {
+      vectors = (vec3_list*) malloc(sizeof(vec3_list));
+      vectors->pairs = (vec3_pair*) malloc(sizeof(Vec3) * 20);
       vectors->len = 0;
-      spheres->len = 0;
+
+      objects = (object_list*) malloc(sizeof(object_list));
+      objects->pairs = (object_pair*) malloc(sizeof(Hitable) * 20);
+      objects->len = 0;
+
+      materials = (material_list*) malloc(sizeof(material_list));
+      materials->pairs = (material_pair*) malloc(sizeof(Material) * 20);
       materials->len = 0;
+
+      textures = (texture_list*) malloc(sizeof(texture_list));
+      textures->pairs = (texture_pair*) malloc(sizeof(Texture) * 20);
       textures->len = 0;
     }
 
     float_list    *floats;
     vec3_list     *vectors;
-    sphere_list   *spheres;
+    object_list   *objects;
     material_list *materials;
     texture_list  *textures;
 
     // Add Values
     void addFloat(std::string ident, float object);
     void addVec3(std::string ident, Vec3 object);
-    void addSphere(std::string ident, Sphere *object);
+    void addObject(std::string ident, Hitable *object);
     void addMaterial(std::string ident, Material *object);
     void addTexture(std::string ident, Texture *object);
 
     // Get Values
     bool getVec3(std::string ident, Vec3& v);
-    bool getSphere(std::string ident, Sphere& s);
+    bool getObject(std::string ident, Hitable& o);
     bool getMaterial(std::string ident, Material& m);
     bool getTexture(std::string ident, Texture& t);
     bool getFloat(std::string ident, float& f);
@@ -103,12 +115,12 @@ void Environment::addVec3(std::string ident, Vec3 object) {
   vectors->len++;
 }
 
-void Environment::addSphere(std::string ident, Sphere *object) {
-  sphere_pair p;
-  p.ident = ident;
-  p.value = object;
-  spheres->pairs[spheres->len] = p;
-  spheres->len++;
+void Environment::addObject(std::string ident, Hitable *object) {
+  object_pair o;
+  o.ident = ident;
+  o.value = object;
+  objects->pairs[objects->len] = o;
+  objects->len++;
 }
 
 void Environment::addMaterial(std::string ident, Material *object) {
@@ -145,10 +157,10 @@ bool Environment::getVec3(std::string ident, Vec3& v) {
   return false;
 }
 
-bool Environment::getSphere(std::string ident, Sphere& s) {
-  for (int i = 0; i < spheres->len; i++) {
-    if (spheres->pairs[i].ident.compare(ident) == 0) {
-      s = *spheres->pairs[i].value;
+bool Environment::getObject(std::string ident, Hitable& o) {
+  for (int i = 0; i < objects->len; i++) {
+    if (objects->pairs[i].ident.compare(ident) == 0) {
+      o = *objects->pairs[i].value;
       return true;
     }
   }

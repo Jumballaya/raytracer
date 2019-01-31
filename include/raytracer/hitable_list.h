@@ -5,7 +5,7 @@
 
 class Hitable_List: public Hitable {
   public:
-    Hitable_List() { list_size = 0; };
+    Hitable_List() { list_size = 0; list = (Hitable**) malloc(sizeof(Hitable*) * 20); };
     Hitable_List(Hitable **l, int n) : list(l), list_size(n) { }
 
     Hitable **list;

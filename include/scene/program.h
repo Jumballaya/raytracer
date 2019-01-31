@@ -35,13 +35,14 @@ class Program {
       ns = 10;
       t0 = 0;
       t1 = 1;
-      lights = 1;
+      lights = true;
       len = 0;
       world = Hitable_List();
     }
 
     int len;
-    int nx, ny, ns, lights;
+    int nx, ny, ns;
+    bool lights;
     float t0, t1;
     camera_data  cam_data;
     Scene        scene;
@@ -55,8 +56,11 @@ class Program {
     void alignCamera();
     void setCamera(Vec3 lookfrom, Vec3 lookat, Vec3 vup, float vfov, float aperture, float focus_dist);
     void setMacro(std::string macro, float value);
-    void setScene() { scene = Scene(cam, &world, nx, ny, ns); }
-    std::string render() { return scene.render(); }
+
+    void setScene() {
+      scene = Scene(cam, &world, nx, ny, ns);
+      if (!lights) scene.toggle_lights();
+    }
 
     void run() {
       alignCamera();
@@ -94,7 +98,8 @@ void Program::setMacro(std::string macro, float value) {
     ns = value;
   }
   if (strcmp(macro.c_str(), "lights") == 0) {
-    lights = value;
+    if (value > 0) lights = true;
+    else lights = false;
   }
   if (strcmp(macro.c_str(), "time_start") == 0) {
     t0 = value;

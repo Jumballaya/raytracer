@@ -6,14 +6,14 @@
 int main(int argc, char **argv) {
   CLI cli(argc, argv);
   Parser p(cli.scene_file);
-  Program prog = p.parseProgram();
+  bool success = p.parseProgram();
 
-  if (p.error_list.length() > 0) {
+  if (!success) {
     p.errors();
     return 1;
   }
 
-  prog.run();
+  p.prog.run();
 
   return 0;
 }

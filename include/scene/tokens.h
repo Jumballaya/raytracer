@@ -68,4 +68,33 @@ TokenType lookupIdent(std::string literal) {
   return TOK_IDENT;
 }
 
+const char* print_token(TokenType tt) {
+  switch (tt) {
+    case TOK_COMMENT: return "Comment";
+    case TOK_MACRO: return "Macro";
+    case TOK_EOF: return "EOF";
+    case TOK_ILLEGAL: return "Illegal";
+    case TOK_LBRACE: return "Left Brace";
+    case TOK_RBRACE: return "Right Brace";
+    case TOK_LPAREN: return "Left Paren";
+    case TOK_RPAREN: return "Right Paren";
+    case TOK_SEMICOLON: return "Semicolon";
+    case TOK_COLON: return "Colon";
+    case TOK_DOT: return "Dot";
+    case TOK_IDENT: return "Ident";
+    case TOK_NUMBER: return "Number";
+    case TOK_VALUE: return "Value";
+    case TOK_OBJECT: return "Object";
+    case TOK_CAMERA: return "Camera";
+    case TOK_TEXTURE: return "Texture";
+    case TOK_MATERIAL: return "Material";
+    case TOK_VEC3: return "Vec3";
+    case TOK_FLOAT: return "Float";
+    case TOK_SPHERE: return "Sphere";
+    case TOK_LAMBERTIAN: return "Lambertian";
+    case TOK_CONSTANT: return "Constant";
+    default: return "Token Not Found";
+  }
+}
+
 #endif
