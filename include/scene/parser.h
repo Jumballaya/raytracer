@@ -205,13 +205,11 @@ void Parser::parseMaterial() {
 }
 
 bool Parser::getFloat(float& f) {
-  if (peekTokenIs(TOK_IDENT) || peekTokenIs(TOK_NUMBER)) {
-    if (peekTokenIs(TOK_IDENT)) {
-      nextToken();
+  if (curTokenIs(TOK_IDENT) || curTokenIs(TOK_NUMBER)) {
+    if (curTokenIs(TOK_IDENT)) {
       prog.env.getFloat(curToken.literal, f);
       return true;
-    } else if (peekTokenIs(TOK_NUMBER)) {
-      nextToken();
+    } else if (curTokenIs(TOK_NUMBER)) {
       f = std::stof(curToken.literal);
       return true;
     }
@@ -240,14 +238,18 @@ bool Parser::getVec3(Vec3& v) {
       if (expectPeek(TOK_LBRACE)) {
         float e0, e1, e2;
         if (getFloat(e0)) {
-          expectPeek(TOK_SEMICOLON);
-          if (getFloat(e1)) {
-            expectPeek(TOK_SEMICOLON);
-            if (getFloat(e2)) {
-              expectPeek(TOK_SEMICOLON);
-              expectPeek(TOK_RBRACE);
-              v = Vec3(e0, e1, e2);
-              return true;
+          if (expectPeek(TOK_SEMICOLON)) {
+            nextToken();
+            if (getFloat(e1)) {
+              if (expectPeek(TOK_SEMICOLON)) {
+                nextToken();
+                if (getFloat(e2)) {
+                  expectPeek(TOK_SEMICOLON);
+                  expectPeek(TOK_RBRACE);
+                  v = Vec3(e0, e1, e2);
+                  return true;
+                }
+              }
             }
           }
         }
@@ -305,8 +307,8 @@ void Parser::parseVec3() {
         float e0, e1, e2;
         if (getFloat(e0) && getFloat(e1) && getFloat(e2)) {
           prog.env.addVec3(ident, Vec3(e0, e1, e2));
-          peekTokenIs(TOK_SEMICOLON);
-          peekTokenIs(TOK_RBRACE);
+          expectPeek(TOK_SEMICOLON);
+          expectPeek(TOK_RBRACE);
         }
       }
     }
@@ -317,10 +319,6 @@ void Parser::parseSphere() {
   float radius;
   Vec3 center;
   Material *m;
-
-  radius = 3;
-  center = Vec3(0, 0, 0);
-  m = new material::metal(new texture::constant(Vec3(0.5, 0.5, 0.5)), 0.5);
 
   std::string ident;
   if (getIdent(ident)) {
@@ -392,6 +390,7 @@ bool Parser::parseFloatField(std::string ident, float& f) {
       nextToken();
       getFloat(f);
       if (expectPeek(TOK_SEMICOLON)) {
+        nextToken();
         return true;
       };
     }
@@ -405,6 +404,7 @@ bool Parser::parseVec3Field(std::string ident, Vec3& v) {
       nextToken();
       getVec3(v);
       if (expectPeek(TOK_SEMICOLON)) {
+        nextToken();
         return true;
       }
     }
@@ -416,9 +416,9 @@ bool Parser::parseMaterialField(std::string ident, Material& m) {
   if (curTokenIs(TOK_MATERIAL) && (curToken.literal.compare(ident) == 0)) {
     if (expectPeek(TOK_COLON)) {
       nextToken();
-      //getMaterial(m);
-      m = material::lambertian(new texture::constant(Vec3(0.5, 0.5, 0.5)));
+      getMaterial(m);
       if (expectPeek(TOK_SEMICOLON)) {
+        nextToken();
         return true;
       }
     }

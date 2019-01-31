@@ -84,6 +84,10 @@ class Environment {
       textures = (texture_list*) malloc(sizeof(texture_list));
       textures->pairs = (texture_pair*) malloc(sizeof(Texture) * 20);
       textures->len = 0;
+
+      floats = (float_list*) malloc(sizeof(float_list));
+      floats->pairs = (float_pair*) malloc(sizeof(float) * 20);
+      floats->len = 0;
     }
 
     float_list    *floats;
