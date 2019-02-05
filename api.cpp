@@ -43,7 +43,7 @@ Hitable *earth() {
   Hitable **list = new Hitable*[3];
   Material *m_earth =  new material::lambertian(new texture::image("assets/earthmap.jpg"));
   Material *m_moon =  new material::lambertian(new texture::image("assets/moonmap.png"));
-  Material *m_ground = new material::metal(new texture::constant(Vec3(0.4, 0.4, 0.4)), 0.1);
+  Material *m_ground = new material::isotropic(new texture::constant(Vec3(0.8, 0.2, 0.3)));
 
   list[0] = new Sphere(Vec3(0,0,0), 2, m_earth);
   list[1] = new Sphere(Vec3(-1,2,0), 0.66, m_moon);
@@ -75,7 +75,7 @@ Camera make_cornell_camera(int nx, int ny) {
 int main() {
   int nx = 800;
   int ny = 800;
-  int ns = 1;
+  int ns = 300;
 
   Camera cam = make_camera(nx, ny);
   //Camera cam = make_cornell_camera(nx, ny);
