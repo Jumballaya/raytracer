@@ -37,7 +37,6 @@ class Parser {
     std::string error_list;
 
     void nextToken();
-    void advanceToken();
 
     // Errors
     void registerError(std::string err) { error_list += err; }
@@ -95,14 +94,11 @@ class Parser {
     void parseMaterialLiteral(Material& m);
 };
 
-void Parser::advanceToken() {
-  peekToken = lexer.nextToken();
-}
-
+// NextToken moves the tokens forward
 void Parser::nextToken() {
   lastToken = curToken;
   curToken = peekToken;
-  advanceToken();
+  peekToken = lexer.nextToken();
 
   if (curTokenIs(TOK_ILLEGAL)) {
     std::string msg = "got illegal token: ";
@@ -113,6 +109,7 @@ void Parser::nextToken() {
   }
 }
 
+// PeekError takes a TokenType and registers an error for that type
 void Parser::peekError(TokenType tt) {
   std::string msg = "expected next token to be: ";
   msg += print_token(tt);
@@ -125,24 +122,13 @@ void Parser::peekError(TokenType tt) {
   registerError(msg);
 }
 
+// Parse Program is the entry point for the entire parser
 bool Parser::parseProgram() {
   while (curToken.type != TOK_EOF) {
     if (curToken.type == TOK_MACRO) parseMacro();
-
     if (curToken.type == TOK_VALUE) parseValue();
     if (curToken.type == TOK_OBJECT) parseObject();
-    if (curToken.type == TOK_TEXTURE) parseTexture();
-    if (curToken.type == TOK_MATERIAL) parseMaterial();
-
-    if (curToken.type == TOK_VEC3) parseVec3();
-    if (curToken.type == TOK_FLOAT) parseFloat();
-
-    if (curToken.type == TOK_CONSTANT) parseConstant();
-    if (curToken.type == TOK_LAMBERTIAN) parseLambertian();
-
     if (curToken.type == TOK_CAMERA) parseCamera();
-    if (curToken.type == TOK_SPHERE) parseSphere();
-
     nextToken();
   }
 
@@ -153,6 +139,7 @@ bool Parser::parseProgram() {
   return true;
 }
 
+// Parse Macro parses a macro starting with the character %
 void Parser::parseMacro() {
   std::string macro = curToken.literal;
   if (expectPeek(TOK_NUMBER)) {
@@ -161,49 +148,195 @@ void Parser::parseMacro() {
   }
 }
 
+// Parse Value is the main branch for Value types (Float, Vec3, Texture, Material, etc.)
 void Parser::parseValue() {
   if (expectPeek(TOK_COLON)) {
-    bool t = peekTokenIs(TOK_TEXTURE);
-    bool m = peekTokenIs(TOK_MATERIAL);
-    bool v = peekTokenIs(TOK_VEC3);
-    bool f = peekTokenIs(TOK_FLOAT);
-    if (t || m || v || f) {
-      nextToken();
+    switch (peekToken.type) {
+      case TOK_TEXTURE:
+        nextToken();
+        parseTexture();
+        return;
+
+      case TOK_MATERIAL:
+        nextToken();
+        parseMaterial();
+        return;
+
+      case TOK_VEC3:
+        nextToken();
+        parseVec3();
+        return;
+
+      case TOK_FLOAT:
+        nextToken();
+        parseFloat();
+        return;
+
+      default:
+        return;
+        // register error: wrong value type
     }
   }
-  // register error: wrong value type
 }
 
+// Parse Object Statement is the main branch for Object types (Sphere, Box, Rect, etc)
 void Parser::parseObject() {
   if (expectPeek(TOK_COLON)) {
-    bool s = peekTokenIs(TOK_SPHERE);
-    if (s) {
-      nextToken();
+    switch (peekToken.type) {
+      case TOK_SPHERE:
+        nextToken();
+        parseSphere();
+        return;
+
+      default:
+        return;
+        // register error: wrong value type
     }
   }
-  // register error: wrong value type
 }
 
+// Parse Texture Statement is the main branch for Texture types (Constant, Noise, Image, etc)
 void Parser::parseTexture() {
   if (expectPeek(TOK_COLON)) {
-    bool c = peekTokenIs(TOK_CONSTANT);
-    if (c) {
-      nextToken();
+    switch (peekToken.type) {
+      case TOK_CONSTANT:
+        nextToken();
+        parseConstant();
+        return;
+
+      default:
+        return;
+        // register error: wrong value type
     }
   }
-  // register error: wrong texture type
 }
 
+// Parse Material Statement is the main branch for Material types (Lambertian, Metal, etc)
 void Parser::parseMaterial() {
   if (expectPeek(TOK_COLON)) {
-    bool l = peekTokenIs(TOK_LAMBERTIAN);
-    if (l) {
-      nextToken();
+    switch (peekToken.type) {
+      case TOK_LAMBERTIAN:
+        nextToken();
+        parseConstant();
+        return;
+
+      default:
+        return;
+        // register error: wrong value type
     }
   }
-  // register error: wrong material type
 }
 
+// Parse Float Statement
+void Parser::parseFloat() {
+  std::string ident;
+  if (getIdent(ident)) {
+    if (expectPeek(TOK_LBRACE)) {
+      nextToken();
+      float val;
+      if (getFloat(val)) {
+        prog.env.addFloat(ident, val);
+        expectPeek(TOK_SEMICOLON);
+        expectPeek(TOK_RBRACE);
+      }
+    }
+  }
+}
+
+
+// Parse Vec3 Statement
+void Parser::parseVec3() {
+  std::string ident;
+  if (getIdent(ident)) {
+    if (expectPeek(TOK_LBRACE)) {
+      if (peekTokenIs(TOK_IDENT) || peekTokenIs(TOK_NUMBER)) {
+        nextToken();
+        float e0, e1, e2;
+        if (getFloat(e0) && getFloat(e1) && getFloat(e2)) {
+          prog.env.addVec3(ident, Vec3(e0, e1, e2));
+          expectPeek(TOK_SEMICOLON);
+          expectPeek(TOK_RBRACE);
+        }
+      }
+    }
+  }
+}
+
+
+// Parse Sphere Statement
+void Parser::parseSphere() {
+  float radius;
+  Vec3 center;
+  Material *m;
+
+  std::string ident;
+  if (getIdent(ident)) {
+    if (expectPeek(TOK_LBRACE)) {
+      nextToken();
+      while (curToken.type != TOK_RBRACE) {
+        parseFloatField(std::string("Radius"), radius);
+        parseVec3Field(std::string("Center"), center);
+        parseMaterialField(std::string("Material"), *m);
+        nextToken();
+      }
+
+      Sphere *s = new Sphere(center, radius, m);
+      prog.env.addObject(ident, s);
+      prog.addObject(s);
+    }
+  }
+}
+
+// Parse Constant Statement
+void Parser::parseConstant() {
+  std::string ident;
+  if (getIdent(ident)) {
+    if (expectPeek(TOK_LBRACE)) {
+      if (peekTokenIs(TOK_IDENT)) {
+        if (curToken.literal.compare("Color") == 0) {
+          if (expectPeek(TOK_COLON)) {
+            if (peekTokenIs(TOK_IDENT)) {
+              Vec3 color;
+              prog.env.getVec3(curToken.literal, color);
+              Texture *t = new texture::constant(color);
+              prog.env.addTexture(ident, t);
+            }
+            // Otherwise check if there is a Vec3 literal
+          }
+        } else {
+          // register error: no Color field
+        }
+      }
+    }
+  }
+}
+
+// Parse Lambertian Statement
+void Parser::parseLambertian() {
+  std::string ident;
+  if (getIdent(ident)) {
+    if (expectPeek(TOK_LBRACE)) {
+      if (peekTokenIs(TOK_IDENT)) {
+        if (curToken.literal.compare("Albedo") == 0) {
+          if (expectPeek(TOK_COLON)) {
+            if (expectPeek(TOK_IDENT)) {
+              Texture *albedo;
+              prog.env.getTexture(curToken.literal, *albedo);
+              Material *l = new material::lambertian(albedo);
+              prog.env.addMaterial(ident, l);
+            }
+            // Otherwise see if there is a Texture literal
+          }
+        } else {
+          // register error: no Albedo field
+        }
+      }
+    }
+  }
+}
+
+// Parse float from literal or identifier
+// e.g. 10.0    or   ten
 bool Parser::getFloat(float& f) {
   if (curTokenIs(TOK_IDENT) || curTokenIs(TOK_NUMBER)) {
     if (curTokenIs(TOK_IDENT)) {
@@ -217,6 +350,8 @@ bool Parser::getFloat(float& f) {
   return false;
 }
 
+// Parse identifier
+// e.g. (ident)
 bool Parser::getIdent(std::string& ident) {
   if (expectPeek(TOK_LPAREN) && peekTokenIs(TOK_IDENT)) {
     nextToken();
@@ -228,6 +363,8 @@ bool Parser::getIdent(std::string& ident) {
   return false;
 }
 
+// Parse Vec3 from literal or identifier
+// e.g. Vec3 { 10; 10; 10; }    or   sphere_center
 bool Parser::getVec3(Vec3& v) {
   if (peekTokenIs(TOK_IDENT) || peekTokenIs(TOK_NUMBER)) {
     if (peekTokenIs(TOK_IDENT)) {
@@ -259,6 +396,8 @@ bool Parser::getVec3(Vec3& v) {
   return false;
 }
 
+// Parse Material from literal or identifier
+// e.g. Constant : { Color: Vec3 { 0.5; 0.5; 0.5; }; }    or    Constant: sphere_mat
 bool Parser::getMaterial(Material& m) {
   if (peekTokenIs(TOK_IDENT)) {
     nextToken();
@@ -271,119 +410,23 @@ bool Parser::getMaterial(Material& m) {
   return false;
 }
 
-// @TODO -- implement
-//void Parser::parseVec3Literal(Vec3& v) {};
+// Parse Float Literal
+// e.g. 0.425632
 //void Parser::parseFloatLiteral(float& f) {};
+
+// Parse Vec3 Literal
+// e.g. Vec3 { 10; 10; 10; }
+//void Parser::parseVec3Literal(Vec3& v) {};
+
+// Parse Texture Literal
 //void Parser::parseTextureLiteral(Texture& t) {};
 
-// @TODO -- implement
-void Parser::parseMaterialLiteral(Material& m) {
-  if (expectPeek(TOK_COLON)) {
-    // @TODO -- Implement a parseLambertianLiteral
-  }
-};
+// Parse Material Literal
+// e.g. Constant : { Color: Vec3 { 0.5; 0.5; 0.5; }; }
+//void Parser::parseMaterialLiteral(Material& m) {};
 
-void Parser::parseFloat() {
-  std::string ident;
-  if (getIdent(ident)) {
-    if (expectPeek(TOK_LBRACE)) {
-      nextToken();
-      float val;
-      if (getFloat(val)) {
-        prog.env.addFloat(ident, val);
-        expectPeek(TOK_SEMICOLON);
-        expectPeek(TOK_RBRACE);
-      }
-    }
-  }
-}
-
-void Parser::parseVec3() {
-  std::string ident;
-  if (getIdent(ident)) {
-    if (expectPeek(TOK_LBRACE)) {
-      if (peekTokenIs(TOK_IDENT) || peekTokenIs(TOK_NUMBER)) {
-        nextToken();
-        float e0, e1, e2;
-        if (getFloat(e0) && getFloat(e1) && getFloat(e2)) {
-          prog.env.addVec3(ident, Vec3(e0, e1, e2));
-          expectPeek(TOK_SEMICOLON);
-          expectPeek(TOK_RBRACE);
-        }
-      }
-    }
-  }
-}
-
-void Parser::parseSphere() {
-  float radius;
-  Vec3 center;
-  Material *m;
-
-  std::string ident;
-  if (getIdent(ident)) {
-    if (expectPeek(TOK_LBRACE)) {
-      nextToken();
-      while (curToken.type != TOK_RBRACE) {
-        parseFloatField(std::string("Radius"), radius);
-        parseVec3Field(std::string("Center"), center);
-        parseMaterialField(std::string("Material"), *m);
-        nextToken();
-      }
-
-      Sphere *s = new Sphere(center, radius, m);
-      prog.env.addObject(ident, s);
-      prog.addObject(s);
-    }
-  }
-}
-
-void Parser::parseConstant() {
-  std::string ident;
-  if (getIdent(ident)) {
-    if (expectPeek(TOK_LBRACE)) {
-      if (peekTokenIs(TOK_IDENT)) {
-        if (curToken.literal.compare("Color") == 0) {
-          if (expectPeek(TOK_COLON)) {
-            if (peekTokenIs(TOK_IDENT)) {
-              Vec3 color;
-              prog.env.getVec3(curToken.literal, color);
-              Texture *t = new texture::constant(color);
-              prog.env.addTexture(ident, t);
-            }
-            // Otherwise check if there is a Vec3 literal
-          }
-        } else {
-          // register error: no Color field
-        }
-      }
-    }
-  }
-}
-
-void Parser::parseLambertian() {
-  std::string ident;
-  if (getIdent(ident)) {
-    if (expectPeek(TOK_LBRACE)) {
-      if (peekTokenIs(TOK_IDENT)) {
-        if (curToken.literal.compare("Albedo") == 0) {
-          if (expectPeek(TOK_COLON)) {
-            if (expectPeek(TOK_IDENT)) {
-              Texture *albedo;
-              prog.env.getTexture(curToken.literal, *albedo);
-              Material *l = new material::lambertian(albedo);
-              prog.env.addMaterial(ident, l);
-            }
-            // Otherwise see if there is a Texture literal
-          }
-        } else {
-          // register error: no Albedo field
-        }
-      }
-    }
-  }
-}
-
+// Parse a Float field
+// e.g.  Radius: 10.0;    or    Radius: ten;
 bool Parser::parseFloatField(std::string ident, float& f) {
   if (curTokenIs(TOK_IDENT) && curToken.literal.compare(ident) == 0) {
     if (expectPeek(TOK_COLON)) {
@@ -398,6 +441,8 @@ bool Parser::parseFloatField(std::string ident, float& f) {
   return false;
 }
 
+// Parse Vec3 Field
+// e.g. Center: Vec3 { 0; 0; 0; };    or    Center: sphere_center;
 bool Parser::parseVec3Field(std::string ident, Vec3& v) {
   if (curTokenIs(TOK_IDENT) && curToken.literal.compare(ident) == 0) {
     if (expectPeek(TOK_COLON)) {
@@ -412,6 +457,8 @@ bool Parser::parseVec3Field(std::string ident, Vec3& v) {
   return false;
 }
 
+// Parse Material Field
+// e.g. Material: Constant { Color: Vec3 { 0.5; 0.5; 0.5; }; };    or   Color: sphere_mat;
 bool Parser::parseMaterialField(std::string ident, Material& m) {
   if (curTokenIs(TOK_MATERIAL) && (curToken.literal.compare(ident) == 0)) {
     if (expectPeek(TOK_COLON)) {
@@ -426,11 +473,13 @@ bool Parser::parseMaterialField(std::string ident, Material& m) {
   return false;
 }
 
-// @TODO -- implement
+// Parse Texture Field
+// e.g. Albedo: Constant { Color: Vec3 { 0.5; 0.5; 0.5; }; };    or   Albedo: sphere_texture;
 bool Parser::parseTextureField(std::string ident, Texture& t) {
   t = texture::constant(Vec3(0.5, 0.5, 0.5));
 }
 
+// Parse Camera Object
 void Parser::parseCamera() {
   Vec3 lookfrom(10,10,10);
   Vec3 lookat(0,0,0);
