@@ -15,29 +15,27 @@
 % set_ns 30
 % lights 0
 
-Value : Float(ten) { 10; }
+val ten = Float 10
+val center = Vec3 { 0; 0; 0; }
+val color = Vec3 { 0.5; 0.5; 0.5; }
+val lookAt = Vec3 { 0; 0; 0; }
 
-Value : Vec3(sphere_center) { 0; 0; 0.0; }
-Value : Vec3(sphere_color) { 0.5; 0.5; 0.5; }
-Value : Vec3(lookfrom) { ten; 10; 10.0; }
-Value : Vec3(lookat) { 0; 0; 0; }
-
-Value : Texture : Constant(sphere_texture) {
-  Color: sphere_color;
+val texture = Texture:Constant {
+  Color: color;
 }
 
-Value : Material : Lambertian(sphere_material) {
-  Albedo: sphere_texture;
+val material = Material:Lambertian {
+  Albedo: texture;
 }
 
-Object : Sphere(main_sphere) {
+obj Sphere {
   Radius: 0.5;
-  Center: sphere_center;
-  Material: sphere_material;
+  Center: center;
+  Material: material;
 }
 
 Camera {
-  Lookfrom: lookfrom;
+  Lookfrom: Vec3 { ten; 10; 10.0; };
   Lookat: lookat;
   Vfov: 40.0;
   Aperature: 0.0;
