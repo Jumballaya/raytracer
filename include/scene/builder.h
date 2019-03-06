@@ -29,8 +29,7 @@ Builder::Builder(std::string fp) {
 void Builder::run() {
   std::cout << "Hello World\n";
 
-  // Use the environment from the parser to build the program
-  // Extract the macro properties, camera and objects
+  // Run the parser and display errors or run the program to build the image
 }
 
 #endif

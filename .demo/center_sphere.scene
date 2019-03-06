@@ -28,7 +28,7 @@ val material = Material:Lambertian {
   Albedo: texture;
 }
 
-obj Sphere {
+obj s1 = Sphere {
   Radius: 0.5;
   Center: center;
   Material: material;

@@ -1,0 +1,66 @@
+####
+##
+#   Earth Image Scene
+##
+####
+
+% start_time 0
+% end_time 1
+% set_nx 800
+% set_ny 400
+% set_ns 30
+% lights 1
+
+val earth_image = Texture:Image {
+  Path: "assets/earthmap.jpg";
+}
+
+val moon_image = Texture:Image {
+  Path: "assets/moonmap.jpg";
+}
+
+val t_brown = Texture:Constant {
+  Color: Vec3 {
+    0.8;
+    0.2;
+    0.3;
+  };
+}
+
+val m_earth = Material:Lambertian {
+  Albedo: earth_image;
+}
+
+val m_moon = Material:Lambertian {
+  Albedo: moon_image;
+}
+
+val m_ground = Material:Isotropic {
+  Albedo: t_brown;
+}
+
+obj ground = Sphere {
+  Radius: 100;
+  Center: Vec3 { 0; 0192.5; 0; };
+  Material: m_ground;
+}
+
+obj earth = Sphere {
+  Radius: 2;
+  Center: Vec3 { 0; 0; 0; };
+  Material: m_earth;
+}
+
+obj moon = Sphere {
+  Radius 0.66;
+  Center: Vec3 { -1; 2; 0; };
+  Material: m_moon;
+}
+
+Camera {
+  Lookfrom: Vec3 { 10; 2; 10; };
+  Lookat: Vec3 { 0; 0; 0; };
+  Vfov: 40.0;
+  Aperature: 0.0;
+  Focus: 10.0;
+}

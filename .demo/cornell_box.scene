@@ -1,0 +1,52 @@
+##
+#  Cornell Box Scene
+##
+
+% start_time 0
+% end_time 1
+% set_nx 800
+% set_ny 400
+% set_ns 30
+% lights 1
+
+val t_red = Texture:Constant { Color: Vec3 { 0.65; 0.05; 0.05; }; }
+val t_white = Texture:Constant { Color: Vec3 { 0.73; 0.73; 0.73; }; }
+val t_green = Texture:Constant { Color: Vec3 { 0.12; 0.45; 0.15; }; }
+val t_light = Texture:Constant { Color: Vec3 { 15; 15; 15; }; }
+val t_metal = Texture:Constant { Color: Vec3 { 0.9; 0.9; 0.9; }; }
+val t_glass = Texture:Constant { Color: Vec3 { 1; 1; 1; }; }
+
+val red = Material:Lambertian { Albedo: t_red; }
+val white = Material:Labertian { Albedo: t_white; }
+val green = Material:Lambertian { Albedo: t_green; }
+val light = Material:DiffuseLight { Emit: t_light; }
+val metal = Material:Metal { Albedo: t_metal; Fuzz: 0; };
+val glass = Material:Dielectric { Albedo: t_glass; Refraction: 1.5; }
+
+obj s1 = Sphere {
+  Radius: 75;
+  Center: Vec3 { 275.5; 275.5; 275.5; };
+  Material: metal;
+}
+
+Camera {
+  Lookfrom: Vec3 { 278; 278; -800; };
+  Lookat: Vec3 { 278; 278; 0; };
+  Vfov: 40.0;
+  Aperature: 0.0;
+  Focus: 10.0;
+}
+
+# Come up with Rect grammar
+# This sucks:
+#
+#   Flip_Normals(new Rect_yz(0, 555, 0, 555, 555, green));
+#   Rect_yz(0, 555, 0, 555, 0, red);
+#   Rect_yz(213, 343, 227, 332, 554, light);
+#   Flip_Normals(new Rect_xz(0, 555, 0, 555, 555, white));
+#   Rect_xz(0, 555, 0, 555, 0, white);
+#   Flip_Normals(new Rect_xy(0, 555, 0, 555, 555, white));
+#   Translate(new Rotate_Y(new Box(Vec3(0, 0, 0), Vec3(165, 165, 165), white), -18), Vec3(130,0,65));
+#   Translate(new Rotate_Y(new Box(Vec3(0, 0, 0), Vec3(165, 330, 165), white),  15), Vec3(265,0,295));
+#
+######

@@ -38,6 +38,7 @@ class Parser {
     int                       current;
     std::vector<ErrorMessage> errors;
     Environment               env;
+    Program                   program;
 
     // Errors
     void registerError(std::string err);
@@ -59,36 +60,36 @@ class Parser {
     void synchronize();
 
     //Parse
-    std::vector<Statement> parse(); // return a vector of Statements
-    Expression        parseExpression();
-    Statement         parseStatement();
+    Program       parse();
+    Expression    parseExpression();
+    Statement     parseStatement();
 
-    Expression        parseLiteral();
-    Expression        parseObject();
-    Expression        parseVec3();
-    Expression        parseTexture();
-    Expression        parseMaterial();
-    Expression        parseCamera();
+    Expression    parseLiteral();
+    Expression    parseObject();
+    Expression    parseVec3();
+    Expression    parseTexture();
+    Expression    parseMaterial();
+    Expression    parseCamera();
 
-    Expression        parseTConstant();
-    Expression        parseTChecker();
-    Expression        parseTNoise();
-    Expression        parseTImage();
+    Expression    parseTConstant();
+    Expression    parseTChecker();
+    Expression    parseTNoise();
+    Expression    parseTImage();
 
-    Expression        parseMLambertian();
-    Expression        parseMMetal();
-    Expression        parseMDielectric();
-    Expression        parseMDiffuseLight();
-    Expression        parseMIsotropic();
+    Expression    parseMLambertian();
+    Expression    parseMMetal();
+    Expression    parseMDielectric();
+    Expression    parseMDiffuseLight();
+    Expression    parseMIsotropic();
 
-    Expression        parseSphere();
-    Expression        parseBox();
-    Expression        parseRect();
+    Expression    parseSphere();
+    Expression    parseBox();
+    Expression    parseRect();
 
-    Statement         parseObjStatement();       // Add the object to the env
-    Statement         parseValStatement();       // Add the value to the env
-    Statement         parseMacroStatement();     // Add the macro to the env
-    Statement         parseExpressionStatement();
+    Statement     parseObjStatement();       // Add the object to the env
+    Statement     parseValStatement();       // Add the value to the env
+    Statement     parseMacroStatement();     // Add the macro to the env
+    Statement     parseExpressionStatement();
 };
 
 void Parser::registerError(std::string err) {
@@ -155,5 +156,10 @@ void Parser::synchronize() {
     advance();
   }
 };
+
+Program Parser::Parse {
+
+  return program;
+}
 
 #endif
