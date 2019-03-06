@@ -49,8 +49,6 @@ class Program {
     Camera       cam;
     Hitable_List world;
 
-    Environment  env;
-
     // Interact with the raytracer API
     void addObject(Hitable* object);
     void alignCamera();

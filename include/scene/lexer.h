@@ -8,8 +8,10 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <vector>
 #include <ctype.h>
 #include "tokens.h"
+
 
 bool isLetter(char ch) {
   bool concat = (ch == '_') || (ch == '-');
@@ -34,18 +36,24 @@ class Lexer {
     Lexer(std::string i, int l) : input(i), len(l) {
       pos = 0;
       readPos = 0;
+      row = 0;
+      col = 0;
       readChar();
     };
 
+    std::vector<Token> tokens();
+    Token nextToken();
+
+  private:
     std::string input;
     int    len;
     int    pos;
     int    readPos;
     char  cur;
 
-    Token nextToken();
+    int row;
+    int col;
 
-  private:
     void skipWhiteSpace();
 
     void         readChar();
@@ -63,6 +71,11 @@ void Lexer::readChar() {
   else cur = input[readPos];
   pos = readPos;
   readPos++;
+  col++;
+  if (cur == '\n') {
+    col = 0;
+    row++;
+  }
 }
 
 std::string Lexer::readIdent() {
@@ -80,7 +93,20 @@ std::string Lexer::readNumber() {
 std::string Lexer::readLine() {
   int position = pos;
   while (cur != '\n') readChar();
+  col = 0;
+  row++;
   return input.substr(position, pos - position);
+}
+
+std::vector<Token> Lexer::tokens() {
+  std::vector<Token> tokens;
+  Token t = nextToken();
+  while (t.type != TOK_EOF) {
+    tokens.push_back(t);
+    t = nextToken();
+  }
+  tokens.push_back(t);
+  return tokens;
 }
 
 Token Lexer::nextToken() {
@@ -88,18 +114,19 @@ Token Lexer::nextToken() {
 
   skipWhiteSpace();
 
-  if (cur == '}') tok = Token(TOK_RBRACE, "}");
-  else if (cur == '{') tok = Token(TOK_LBRACE, "{");
-  else if (cur == '(') tok = Token(TOK_LPAREN, "(");
-  else if (cur == ')') tok = Token(TOK_RPAREN, ")");
-  else if (cur == ':') tok = Token(TOK_COLON, ":");
-  else if (cur == ';') tok = Token(TOK_SEMICOLON, ";");
-  else if (cur == '.') tok = Token(TOK_DOT, ".");
+  if (cur == '}') tok = Token(TOK_RBRACE, "}", row, col);
+  else if (cur == '{') tok = Token(TOK_LBRACE, "{", row, col);
+  else if (cur == '(') tok = Token(TOK_LPAREN, "(", row, col);
+  else if (cur == ')') tok = Token(TOK_RPAREN, ")", row, col);
+  else if (cur == ':') tok = Token(TOK_COLON, ":", row, col);
+  else if (cur == ';') tok = Token(TOK_SEMICOLON, ";", row, col);
+  else if (cur == '.') tok = Token(TOK_DOT, ".", row, col);
+  else if (cur == '=') tok = Token(TOK_EQUAL, "=", row, col);
   else if (cur == '%') {
     readChar();
     skipWhiteSpace();
     tok.type = TOK_MACRO;
-    tok.literal = readIdent();
+    tok.literal = "%";
   }
   else if (cur == '#') {
     readChar();
@@ -121,7 +148,7 @@ Token Lexer::nextToken() {
     tok.type = TOK_NUMBER;
     return tok;
   } else {
-    tok = Token(TOK_ILLEGAL, &cur);
+    tok = Token(TOK_ILLEGAL, &cur, row, col);
   }
 
   readChar();

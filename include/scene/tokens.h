@@ -26,44 +26,48 @@ enum TokenType {
   TOK_SEMICOLON,   // 8
   TOK_COLON,       // 9
   TOK_DOT,         // 10
+  TOK_EQUAL,       // 11
 
-  TOK_IDENT,       // 11
-  TOK_NUMBER,      // 12
+  TOK_IDENT,       // 12
+  TOK_NUMBER,      // 13
 
-  TOK_VALUE,       // 13
-  TOK_OBJECT,      // 14
-  TOK_CAMERA,      // 15
+  TOK_CAMERA,      // 14
 
-  TOK_TEXTURE,     // 16
-  TOK_MATERIAL,    // 17
-  TOK_VEC3,        // 18
-  TOK_FLOAT,       // 19
-  TOK_SPHERE,      // 20
+  TOK_TEXTURE,     // 15
+  TOK_MATERIAL,    // 16
+  TOK_VEC3,        // 17
+  TOK_FLOAT,       // 18
+  TOK_SPHERE,      // 19
 
-  TOK_LAMBERTIAN,  // 21
-  TOK_CONSTANT,    // 22
+  TOK_LAMBERTIAN,  // 20
+  TOK_CONSTANT,    // 21
+
+  TOK_OBJ,         // 22
+  TOK_VAL,         // 23
 };
 
 class Token {
   public:
     Token() {}
-    Token(TokenType tt, std::string lit) : type(tt), literal(lit) {}
+    Token(TokenType tt, std::string lit, int r, int c) : type(tt), literal(lit), row(r), column(c) {}
 
     TokenType   type;
     std::string literal;
+    int         row;
+    int         column;
 };
 
 TokenType lookupIdent(std::string literal) {
-  if (literal.compare("Value") == 0) return TOK_VALUE;
   if (literal.compare("Float") == 0) return TOK_FLOAT;
   if (literal.compare("Texture") == 0) return TOK_TEXTURE;
   if (literal.compare("Constant") == 0) return TOK_CONSTANT;
   if (literal.compare("Material") == 0) return TOK_MATERIAL;
   if (literal.compare("Lambertian") == 0) return TOK_LAMBERTIAN;
-  if (literal.compare("Object") == 0) return TOK_OBJECT;
   if (literal.compare("Sphere") == 0) return TOK_SPHERE;
   if (literal.compare("Camera") == 0) return TOK_CAMERA;
   if (literal.compare("Vec3") == 0) return TOK_VEC3;
+  if (literal.compare("obj") == 0) return TOK_OBJ;
+  if (literal.compare("val") == 0) return TOK_VAL;
 
   return TOK_IDENT;
 }
@@ -83,8 +87,6 @@ const char* print_token(TokenType tt) {
     case TOK_DOT: return "Dot";
     case TOK_IDENT: return "Ident";
     case TOK_NUMBER: return "Number";
-    case TOK_VALUE: return "Value";
-    case TOK_OBJECT: return "Object";
     case TOK_CAMERA: return "Camera";
     case TOK_TEXTURE: return "Texture";
     case TOK_MATERIAL: return "Material";
@@ -93,6 +95,9 @@ const char* print_token(TokenType tt) {
     case TOK_SPHERE: return "Sphere";
     case TOK_LAMBERTIAN: return "Lambertian";
     case TOK_CONSTANT: return "Constant";
+    case TOK_OBJ: return "Object Assignment";
+    case TOK_VAL: return "Value Assignment";
+    case TOK_EQUAL: return "Equals";
     default: return "Token Not Found";
   }
 }
