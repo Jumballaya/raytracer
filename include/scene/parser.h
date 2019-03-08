@@ -69,28 +69,26 @@ class Parser {
     void      parseObjStatement();
     void      parseValStatement();
     void      parseMacroStatement();
-    void      parseExpressionStatement();
 
     void        parseObject(Token ident);
     void        parseValue(Token ident);
     void        parseMacro(Token ident);
     Camera      parseCamera();
-    string      parseStringLiteral();
     float       parseNumberLiteral();
     Vec3        parseVec3();
     Texture*    parseTexture();
     Material*   parseMaterial();
 
     texture::constant   parseTConstant();
-    texture::checker    parseTChecker();
-    texture::noise      parseTNoise();
-    texture::image      parseTImage();
+    //texture::checker    parseTChecker();
+    //texture::noise      parseTNoise();
+    //texture::image      parseTImage();
 
     material::lambertian     parseMLambertian();
-    material::metal          parseMMetal();
-    material::dielectric     parseMDielectric();
-    material::diffuse_light  parseMDiffuseLight();
-    material::isotropic      parseMIsotropic();
+    //material::metal          parseMMetal();
+    //material::dielectric     parseMDielectric();
+    //material::diffuse_light  parseMDiffuseLight();
+    //material::isotropic      parseMIsotropic();
 
     Sphere    parseSphere();
     Box       parseBox();
@@ -172,7 +170,6 @@ void Parser::parseStatement() {
   if (check(TOK_OBJ)) return parseObjStatement();
   if (check(TOK_VAL)) return parseValStatement();
   if (check(TOK_MACRO)) return parseMacroStatement();
-  return parseExpressionStatement();
 }
 
 // ObjStmt -> "obj" Identifier "=" Expression ";"
@@ -238,7 +235,7 @@ void Parser::parseValue(Token ident) {
   }
 }
 
-// "Vec3" "{" ( (NUMBER | Identifier) ";" )*3 "}"
+// Vec3 -> "Vec3" "{" ( (NUMBER | Identifier) ";" )*3 "}"
 Vec3 Parser::parseVec3() {
   vector<float> vec;
   if (match(vector<TokenType>{TOK_VEC3, TOK_LBRACE})) {
@@ -267,6 +264,68 @@ Vec3 Parser::parseVec3() {
   return Vec3(-1, -1, -1);
 }
 
+// Texture -> "Texture" ":" [type] "{" [fields] "}"
+Texture* Parser::parseTexture() {
+  if (match(vector<TokenType>{TOK_TEXTURE, TOK_COLON})) {
+    if (peek().type == TOK_CONSTANT) {
+      advance();
+      consume(TOK_LBRACE, "expected left brace after texture type");
+      Texture* t = parseTConstant();
+      consume(TOK_RBACE, "expected right brace after texture declaration");
+      return t;
+    }
+  }
+
+  registerError("improper Texture formation");
+  synchronize();
+  return NULL;
+}
+
+// Texture Constant -> "Color" ":" ( Vec3 | Identifier ) ";"
+texture::constant Parser::parseTConstant() {
+  if (peek().type == TOK_IDENT && peek().literal == "Color") {
+    advance();
+    consume(TOK_COLON, "expected colon");
+    Vec3 c = parseVec3();
+    consume(TOK_SEMICOLON, "expected semicolon");
+    return texture::constant(c);
+  }
+  registerError("improper Texture:Constant formation");
+  synchronize();
+  return NULL;
+}
+
+// Material -> "Material" ":" [type] "{" [fields] "}"
+Material* Parser::parseMaterial() {
+  if (match(vector<TokenType>{TOK_MATERIAL, TOK_COLON})) {
+    if (peek().type == TOK_LAMBERTIAN) {
+      advance();
+      consume(TOK_LBRACE, "expected left brace after material type");
+      Material* m = parseMLambertian();
+      consume(TOK_RBACE, "expected right brace after material declaration");
+      return m;
+    }
+  }
+
+  registerError("improper Material formation");
+  synchronize();
+  return NULL;
+}
+
+// Material:Lambertian -> "Albedo" ":" ( Texture | Identifier ) ";"
+texture::constant Parser::parseMLambertian() {
+  if (peek().type == TOK_IDENT && peek().literal == "Albedo") {
+    advance();
+    consume(TOK_COLON, "expected colon");
+    Texture *t = parseTexture();
+    consume(TOK_SEMICOLON, "expected semicolon");
+    return material::lambertian(t);
+  }
+  registerError("improper Material:Lambertian formation");
+  synchronize();
+  return NULL;
+}
+
 // FloatLiteral -> NUMBER
 float Parser::parseFloatLiteral() {
   string::size_type sz;
@@ -292,5 +351,7 @@ void Parser::parseMacro(Token ident) {
   float lit = stof(n.literal, &sz);
   program.setMacro(ident.literal, lit);
 }
+
+void Parser::parseCamera() {}
 
 #endif
