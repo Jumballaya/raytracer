@@ -30,20 +30,21 @@ enum TokenType {
 
   TOK_IDENT,       // 12
   TOK_NUMBER,      // 13
+  TOK_STRING,      // 14
 
-  TOK_CAMERA,      // 14
+  TOK_CAMERA,      // 15
 
-  TOK_TEXTURE,     // 15
-  TOK_MATERIAL,    // 16
-  TOK_VEC3,        // 17
-  TOK_FLOAT,       // 18
-  TOK_SPHERE,      // 19
+  TOK_TEXTURE,     // 16
+  TOK_MATERIAL,    // 17
+  TOK_VEC3,        // 18
+  TOK_FLOAT,       // 19
+  TOK_SPHERE,      // 20
 
-  TOK_LAMBERTIAN,  // 20
-  TOK_CONSTANT,    // 21
+  TOK_LAMBERTIAN,  // 21
+  TOK_CONSTANT,    // 22
 
-  TOK_OBJ,         // 22
-  TOK_VAL,         // 23
+  TOK_OBJ,         // 23
+  TOK_VAL,         // 24
 };
 
 class Token {

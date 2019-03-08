@@ -127,25 +127,35 @@ Token Lexer::nextToken() {
     skipWhiteSpace();
     tok.type = TOK_MACRO;
     tok.literal = "%";
+    tok.row = row;
+    tok.column = col;
   }
   else if (cur == '#') {
     readChar();
     tok.type = TOK_COMMENT;
     tok.literal = readLine();
+    tok.row = row;
+    tok.column = col;
   }
   else if (cur == '\0') {
     tok.literal = "";
     tok.type = TOK_EOF;
+    tok.row = row;
+    tok.column = col;
   }
   else if (isLetter(cur)) {
     if (isWhiteSpace(cur)) skipWhiteSpace();
     tok.literal = readIdent();
     tok.type = lookupIdent(tok.literal);
+    tok.row = row;
+    tok.column = col;
     return tok;
   }
   else if (isDigit(cur)) {
     tok.literal = readNumber();
     tok.type = TOK_NUMBER;
+    tok.row = row;
+    tok.column = col;
     return tok;
   } else {
     tok = Token(TOK_ILLEGAL, &cur, row, col);

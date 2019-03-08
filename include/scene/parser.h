@@ -8,7 +8,6 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <cstdarg>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -26,74 +25,79 @@
 #include "raytracer/rect.h"
 #include "raytracer/box.h"
 
+using std::vector;
+using std::string;
+
+
 class Parser {
   public:
-    Parser(std::vector<Token> tkns) : tokens(tkns) { current = 0; }
+    Parser(vector<Token> tkns) : tokens(tkns) { current = 0; }
     Parser() { current = 0; }
 
-    void setTokens(std::vector<Token> tkns) { tokens = tkns; current = 0; }
+    void setTokens(vector<Token> tkns) { tokens = tkns; current = 0; }
 
   private:
-    std::vector<Token>        tokens;
+    vector<Token>        tokens;
     int                       current;
-    std::vector<ErrorMessage> errors;
+    vector<ErrorMessage> errors;
     Environment               env;
     Program                   program;
 
     // Errors
-    void registerError(std::string err);
+    void registerError(string err);
     bool hasErrors();
     void printErrors();
 
     // Boolean functions
-    bool match(TokenType types...);
+    bool match(vector<TokenType>);
     bool check(TokenType type);
     bool isAtEnd();
 
     // Token producing functions
-    Token consume(TokenType type, std::string message);
+    Token consume(TokenType type, string message);
     Token advance();
     Token peek();
-    Token previous;
+    Token previous();
 
     // Others
     void synchronize();
 
     //Parse
-    Program       parse();
-    Expression    parseExpression();
-    Statement     parseStatement();
+    Program   parse();
+    void      parseStatement();
+    void      parseExpression();
 
-    Expression    parseLiteral();
-    Expression    parseObject();
-    Expression    parseVec3();
-    Expression    parseTexture();
-    Expression    parseMaterial();
-    Expression    parseCamera();
+    void      parseObjStatement();
+    void      parseValStatement();
+    void      parseMacroStatement();
+    void      parseExpressionStatement();
 
-    Expression    parseTConstant();
-    Expression    parseTChecker();
-    Expression    parseTNoise();
-    Expression    parseTImage();
+    void        parseObject(Token ident);
+    Camera      parseCamera();
+    string      parseStringLiteral();
+    float       parseNumberLiteral();
+    Vec3        parseVec3();
+    Texture     parseTexture();
+    Material    parseMaterial();
 
-    Expression    parseMLambertian();
-    Expression    parseMMetal();
-    Expression    parseMDielectric();
-    Expression    parseMDiffuseLight();
-    Expression    parseMIsotropic();
+    texture::Constant   parseTConstant();
+    texture::Texture    parseTChecker();
+    texture::Noise      parseTNoise();
+    texture::Image      parseTImage();
 
-    Expression    parseSphere();
-    Expression    parseBox();
-    Expression    parseRect();
+    Material::Lambertian    parseMLambertian();
+    Material::Metal         parseMMetal();
+    Material::Dielectric    parseMDielectric();
+    Material::DiffuseLight  parseMDiffuseLight();
+    Material::Isotropic     parseMIsotropic();
 
-    Statement     parseObjStatement();       // Add the object to the env
-    Statement     parseValStatement();       // Add the value to the env
-    Statement     parseMacroStatement();     // Add the macro to the env
-    Statement     parseExpressionStatement();
+    Sphere    parseSphere();
+    Box       parseBox();
+
 };
 
-void Parser::registerError(std::string err) {
-  ErrorMessage e = ErrorMessage(err, row, col);
+void Parser::registerError(string err) {
+  ErrorMessage e = ErrorMessage(err, tokens.at(current).row, tokens.at(current).column);
   errors.push_back(e);
 };
 
@@ -103,16 +107,13 @@ bool Parser::hasErrors() {
 
 void Parser::printErrors() {
   for (auto e = errors.begin(); e != errors.end(); ++e) {
-    std::cout << e.format() << "\n";
+    std::cout << (*e).format() << "\n";
   }
 };
 
-bool Parser::match(TokenType types...) {
-  va_list args;
-  va_start(args, types);
-
-  while (*types != '\0') {
-    if (check(*types)) {
+bool Parser::match(vector<TokenType> types) {
+  for (auto t = types.begin(); t != types.end(); ++t) {
+    if (check(*t)) {
       advance();
       return true;
     }
@@ -130,7 +131,7 @@ bool Parser::isAtEnd() {
   return peek().type == TOK_EOF;
 };
 
-Token Parser::consume(TokenType type, std::string message) {
+Token Parser::consume(TokenType type, string message) {
   if (check(type)) return advance();
   registerError(message);
 };
@@ -157,9 +158,82 @@ void Parser::synchronize() {
   }
 };
 
-Program Parser::Parse {
-
+Program Parser::parse() {
+  while (!isAtEnd()) {
+    parseStatement();
+    advance();
+  }
   return program;
+}
+
+// Statement -> ObjStmt | ValStmt | MacroStmt | ExprStmt
+void Parser::parseStatement() {
+  if (check(TOK_OBJ)) return parseObjStatement();
+  if (check(TOK_VAL)) return parseValStatement();
+  if (check(TOK_MACRO)) return parseMacroStatement();
+  return parseExpressionStatement();
+}
+
+// ObjStmt -> "obj" Identifier "=" Expression ";"
+void Parser::parseObjStatement() {
+  consume(TOK_OBJ, "expected keyword 'obj'");
+  Token ident = consume(TOK_IDENTIFIER, "expected identifier");
+  consume(TOK_EQUAL, "expected token '='");
+  parseObject(ident);
+  consume(TOK_SEMICOLON, "expected token ';'");
+}
+
+// Object -> Sphere | Box
+void Parser::parseObject(Token ident) {
+  if (check(TOK_SPHERE)) {
+    Sphere s = parseSphere();
+    // Add obj to environment with the identifier name
+    return;
+  }
+}
+
+// ValStmt -> "val" Identifier "=" Expression ";"
+void Parser::parseValStatement() {
+  consume(TOK_VAL, "expected keyword 'val'");
+  Token ident = consume(TOK_IDENTIFIER, "expected identifier");
+  consume(TOK_EQUAL, "expected token '='");
+  parseValue(ident);
+  consume(TOK_SEMICOLON, "expected token ';'");
+}
+
+// Value -> Vec3 | Texture | Material | Camera
+void Parser::parseValue(Token ident) {
+  if (check(TOK_VEC3})) {
+    Vec3 obj = parseVec3();
+    // Add val to environment with the identifier name
+    return;
+  }
+  if (check(TOK_TEXTURE})) {
+    Texture t = parseTexture();
+    // Add val to environment with the identifier name
+    return;
+  }
+  if (check(TOK_MATERIAL})) {
+    Material m = parseMaterial();
+    // Add val to environment with the identifier name
+    return;
+  }
+  if (check(TOK_CAMERA})) {
+    // Parse camera field and edit the program there
+    parseCamera();
+    return;
+  }
+}
+
+// MacroStmt -> "%" Identifier ( NUMBER | STRING )
+void Parser::parseMacroStatement() {
+  consume(TOK_MACRO, "expected keyword '%'");
+  Token ident = consume(TOK_IDENTIFIER, "expected identifier");
+  parseMacro(ident);
+}
+
+void Parser::parseMacro(Token ident) {
+  // Parse the macro value and set it on the program
 }
 
 #endif

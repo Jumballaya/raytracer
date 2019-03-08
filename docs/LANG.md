@@ -17,9 +17,9 @@ Grammar:
                  | ValStmt
                  | MacroStmt
 
-  ExprStmt      -> Expression
-  ObjStmt       -> "obj" Identifier "=" Expression
-  ValStmt       -> "val" Identifier "=" Expression
+  ExprStmt      -> Expression ";"
+  ObjStmt       -> "obj" Identifier "=" Expression ";"
+  ValStmt       -> "val" Identifier "=" Expression ";"
   MacroStmt     -> "%" Identifier ( NUMBER | STRING )
 
   Expression    -> Literal | Object

@@ -7,10 +7,39 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
+#include <iostream>
+#include "tokens.h"
+
 class Expression {};
 
 namespace expression {
-  class Literal : Expression {};
+  class StringLiteral : public Expression {
+    public:
+      StringLiteral(std::string val) : value(val) {};
+      std::string value;
+
+      virtual TokenType getType() {
+        return TOK_STRING;
+      }
+
+      std::string getValue() {
+        return value;
+      }
+  };
+
+  class NumberLiteral : public Expression {
+    public:
+      NumberLiteral(float val) : value(val) {};
+      float value;
+
+      virtual TokenType getType() {
+        return TOK_NUMBER;
+      }
+
+      float getValue() {
+        return value;
+      }
+  };
 
   class Object : Expression {};
 
