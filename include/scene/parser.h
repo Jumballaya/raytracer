@@ -38,10 +38,10 @@ class Parser {
 
   private:
     vector<Token>        tokens;
-    int                       current;
+    int                  current;
     vector<ErrorMessage> errors;
-    Environment               env;
-    Program                   program;
+    Environment          env;
+    Program              program;
 
     // Errors
     void registerError(string err);
@@ -65,7 +65,6 @@ class Parser {
     //Parse
     Program   parse();
     void      parseStatement();
-    void      parseExpression();
 
     void      parseObjStatement();
     void      parseValStatement();
@@ -73,23 +72,25 @@ class Parser {
     void      parseExpressionStatement();
 
     void        parseObject(Token ident);
+    void        parseValue(Token ident);
+    void        parseMacro(Token ident);
     Camera      parseCamera();
     string      parseStringLiteral();
     float       parseNumberLiteral();
     Vec3        parseVec3();
-    Texture     parseTexture();
-    Material    parseMaterial();
+    Texture*    parseTexture();
+    Material*   parseMaterial();
 
-    texture::Constant   parseTConstant();
-    texture::Texture    parseTChecker();
-    texture::Noise      parseTNoise();
-    texture::Image      parseTImage();
+    texture::constant   parseTConstant();
+    texture::checker    parseTChecker();
+    texture::noise      parseTNoise();
+    texture::image      parseTImage();
 
-    Material::Lambertian    parseMLambertian();
-    Material::Metal         parseMMetal();
-    Material::Dielectric    parseMDielectric();
-    Material::DiffuseLight  parseMDiffuseLight();
-    Material::Isotropic     parseMIsotropic();
+    material::lambertian     parseMLambertian();
+    material::metal          parseMMetal();
+    material::dielectric     parseMDielectric();
+    material::diffuse_light  parseMDiffuseLight();
+    material::isotropic      parseMIsotropic();
 
     Sphere    parseSphere();
     Box       parseBox();
@@ -177,7 +178,7 @@ void Parser::parseStatement() {
 // ObjStmt -> "obj" Identifier "=" Expression ";"
 void Parser::parseObjStatement() {
   consume(TOK_OBJ, "expected keyword 'obj'");
-  Token ident = consume(TOK_IDENTIFIER, "expected identifier");
+  Token ident = consume(TOK_IDENT, "expected identifier");
   consume(TOK_EQUAL, "expected token '='");
   parseObject(ident);
   consume(TOK_SEMICOLON, "expected token ';'");
@@ -195,45 +196,101 @@ void Parser::parseObject(Token ident) {
 // ValStmt -> "val" Identifier "=" Expression ";"
 void Parser::parseValStatement() {
   consume(TOK_VAL, "expected keyword 'val'");
-  Token ident = consume(TOK_IDENTIFIER, "expected identifier");
+  Token ident = consume(TOK_IDENT, "expected identifier");
   consume(TOK_EQUAL, "expected token '='");
   parseValue(ident);
   consume(TOK_SEMICOLON, "expected token ';'");
 }
 
-// Value -> Vec3 | Texture | Material | Camera
+// Value -> Vec3 | Texture | Material | Camera | STRING | NUMBER
 void Parser::parseValue(Token ident) {
-  if (check(TOK_VEC3})) {
+  if (check(TOK_VEC3)) {
     Vec3 obj = parseVec3();
+    ErrorMessage* err = env.setVec3(ident, obj);
+    if (err) errors.push_back(err);
+    return;
+  }
+  if (check(TOK_TEXTURE)) {
+    Texture *t = parseTexture();
     // Add val to environment with the identifier name
     return;
   }
-  if (check(TOK_TEXTURE})) {
-    Texture t = parseTexture();
+  if (check(TOK_MATERIAL)) {
+    Material *m = parseMaterial();
     // Add val to environment with the identifier name
     return;
   }
-  if (check(TOK_MATERIAL})) {
-    Material m = parseMaterial();
-    // Add val to environment with the identifier name
-    return;
-  }
-  if (check(TOK_CAMERA})) {
+  if (check(TOK_CAMERA)) {
     // Parse camera field and edit the program there
     parseCamera();
     return;
   }
+  if (check(TOK_NUMBER)) {
+    float f = parseFloatLiteral();
+    ErrorMessage* err = env.setFloat(ident, f);
+    if (err) errors.push_back(err);
+    return;
+  }
+  if (check(TOK_STRING)) {
+    ErrorMessage* err = env.setString(ident, peek().literal);
+    if (err) errors.push_back(err);
+    return;
+  }
+}
+
+// "Vec3" "{" ( (NUMBER | Identifier) ";" )*3 "}"
+Vec3 Parser::parseVec3() {
+  vector<float> vec;
+  if (match(vector<TokenType>{TOK_VEC3, TOK_LBRACE})) {
+    // parse the 3 fields ( NUMBER | Identifier ) ";"
+    int i;
+    for (i = 0; i < 3; i++) {
+      if (check(TOK_NUMBER)) vector.push_back(parseFloatLiteral());
+      if (check(TOK_IDENT)) {
+        // get the value from the environment
+        ErrorMessage *err;
+        float lit = env.getFloat(peek(), err);
+        if (err) {
+          errors.push_back(err);
+        } else {
+          vector.push_back(lit);
+        }
+      }
+      consume(TOK_SEMICOLON, "expected semicolon after expression");
+    }
+    consume(TOK_RBRACE, "expected right brace");
+    Vec3 ret = Vec3(vec.at(0), vec.at(1), vec.at(2));
+    return ret;
+  }
+  registerError("improper Vec3 formation");
+  synchronize();
+  return Vec3(-1, -1, -1);
+}
+
+// FloatLiteral -> NUMBER
+float Parser::parseFloatLiteral() {
+  string::size_type sz;
+  return stof(peek().literal, &sz);
 }
 
 // MacroStmt -> "%" Identifier ( NUMBER | STRING )
 void Parser::parseMacroStatement() {
   consume(TOK_MACRO, "expected keyword '%'");
-  Token ident = consume(TOK_IDENTIFIER, "expected identifier");
+  Token ident = consume(TOK_IDENT, "expected identifier");
   parseMacro(ident);
 }
 
 void Parser::parseMacro(Token ident) {
   // Parse the macro value and set it on the program
+  if (check(TOK_STRING)) {
+    // not implemented
+    advance();
+    return;
+  }
+  Token n = consume(TOK_NUMBER, "expected string or number literal for macro value");
+  string::size_type sz;
+  float lit = stof(n.literal, &sz);
+  program.setMacro(ident.literal, lit);
 }
 
 #endif

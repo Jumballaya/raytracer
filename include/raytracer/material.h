@@ -7,6 +7,8 @@
 // Material base class
 class Material {
   public:
+    Material() {}
+    ~Material() {}
     virtual bool scatter(const Ray& r_in, const hit_record& rec, Vec3& attenuation, Ray& scattered) const = 0;
     virtual Vec3 emitted(float u, float v, const Vec3& p) const {
       return Vec3(0,0,0);
@@ -52,6 +54,7 @@ namespace material {
   class lambertian : public Material {
     public:
       lambertian(Texture *a) : albedo(a) {}
+      ~lambertian() {}
 
       Texture *albedo;
 
@@ -67,6 +70,7 @@ namespace material {
   class metal : public Material {
     public:
       metal(Texture *a, float f) : albedo(a) { if (f < 1) fuzz = f; else fuzz = 1; }
+      ~metal() {}
 
       Texture  *albedo;
       float    fuzz;
@@ -84,6 +88,7 @@ namespace material {
   class dielectric : public Material {
     public:
       dielectric(Texture *a, float ri) : ref_idx(ri), albedo(a) {}
+      ~dielectric() {}
 
       float ref_idx;
       Texture *albedo;
@@ -126,6 +131,7 @@ namespace material {
   class diffuse_light : public Material {
     public:
       diffuse_light(Texture *a) : emit(a) {}
+      ~diffuse_light() {}
 
       Texture *emit;
 
@@ -142,6 +148,7 @@ namespace material {
   class isotropic : public Material {
     public:
       isotropic(Texture *a) : albedo(a) {}
+      ~isotropic() {}
 
       Texture *albedo;
 

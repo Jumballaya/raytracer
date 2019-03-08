@@ -7,16 +7,23 @@
 
 #include <sstream>
 
+using std::string;
+using std::ostringstream;
+
 class ErrorMessage {
   public:
     std::string message;
     int         row;
     int         col;
 
-    ErrorMessage(std::string msg, int r, int c) : message(msg), row(r), col(c) {};
+    ErrorMessage() { message = ""; row = -1; col = -1; }
+    ErrorMessage(string msg, int r, int c) : message(msg), row(r), col(c) {}
 
-    std::string format() {
-      std::ostringstream oss;
+    void setMessage(string msg) { message = msg; }
+    void setPos(int r, int c) { row = r; col = c; }
+
+    string format() {
+      ostringstream oss;
       oss << "Error: " << message << " on line " << row << " column " << col;
       return oss.str();
     }

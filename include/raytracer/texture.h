@@ -8,6 +8,8 @@
 
 class Texture {
   public:
+    Texture() {}
+    ~Texture() {}
     virtual Vec3 value(float u, float v, const Vec3& p) const = 0;
 };
 
@@ -16,6 +18,7 @@ namespace texture {
     public:
       constant() {}
       constant(Vec3 c): color(c) {}
+      ~constant() {}
 
       Vec3 color;
 
@@ -28,6 +31,7 @@ namespace texture {
     public:
       checker() {}
       checker(Texture *t0, Texture *t1): even(t0), odd(t1) { }
+      ~checker() {}
 
       Texture *even;
       Texture *odd;
@@ -43,6 +47,7 @@ namespace texture {
     public:
       noise() {}
       noise(float sc, int t) : scale(sc), type(t) {}
+      ~noise() {}
 
       perlin n;
       float scale;
@@ -68,6 +73,7 @@ namespace texture {
       image(const char *p) : path(p) {
         data = stbi_load(path, &nx, &ny, &nn, 0);
       }
+      ~image() {}
 
       const char *path;
       unsigned char *data;
