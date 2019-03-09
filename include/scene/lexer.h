@@ -9,25 +9,44 @@
 #define LEXER_H
 
 #include <vector>
-#include <ctype.h>
+#include <cctype>
+#include <algorithm>
+
 #include "tokens.h"
 
 
-bool isLetter(char ch) {
+static inline bool isLetter(char ch) {
   bool concat = (ch == '_') || (ch == '-');
   return isalpha(ch) || concat;
 }
 
-bool isDigit(char ch) {
+static inline bool isDigit(char ch) {
   return isdigit(ch);
 }
 
-bool isWhiteSpace(char ch) {
+static inline bool isWhiteSpace(char ch) {
   return isspace(ch) || (ch == '\n');
 }
 
-bool isIdent(char ch) {
+static inline bool isIdent(char ch) {
   return (isLetter(ch) || isDigit(ch)) && !isWhiteSpace(ch);
+}
+
+static inline void ltrim(std::string &s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+    return !std::isspace(ch);
+  }));
+}
+
+static inline void rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+    return !std::isspace(ch);
+  }).base(), s.end());
+}
+
+static inline void trim(std::string &s) {
+  ltrim(s);
+  rtrim(s);
 }
 
 class Lexer {
@@ -94,7 +113,6 @@ std::string Lexer::readLine() {
   int position = pos;
   while (cur != '\n') readChar();
   col = 0;
-  row++;
   return input.substr(position, pos - position);
 }
 
@@ -123,8 +141,6 @@ Token Lexer::nextToken() {
   else if (cur == '.') tok = Token(TOK_DOT, ".", row, col);
   else if (cur == '=') tok = Token(TOK_EQUAL, "=", row, col);
   else if (cur == '%') {
-    readChar();
-    skipWhiteSpace();
     tok.type = TOK_MACRO;
     tok.literal = "%";
     tok.row = row;
@@ -144,8 +160,9 @@ Token Lexer::nextToken() {
     tok.column = col;
   }
   else if (isLetter(cur)) {
-    if (isWhiteSpace(cur)) skipWhiteSpace();
-    tok.literal = readIdent();
+    std::string ident = readIdent();
+    trim(ident);
+    tok.literal = ident;
     tok.type = lookupIdent(tok.literal);
     tok.row = row;
     tok.column = col;

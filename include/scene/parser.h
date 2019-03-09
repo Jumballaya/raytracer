@@ -162,7 +162,6 @@ void Parser::synchronize() {
 Program Parser::parse() {
   while (!isAtEnd()) {
     parseStatement();
-    advance();
   }
   return program;
 }
@@ -172,6 +171,8 @@ void Parser::parseStatement() {
   if (check(TOK_OBJ)) return parseObjStatement();
   if (check(TOK_VAL)) return parseValStatement();
   if (check(TOK_MACRO)) return parseMacroStatement();
+  advance();
+  synchronize();
 }
 
 // ObjStmt -> "obj" Identifier "=" Expression ";"
@@ -204,7 +205,6 @@ void Parser::parseValStatement() {
   Token ident = consume(TOK_IDENT, "expected identifier");
   consume(TOK_EQUAL, "expected token '='");
   parseValue(ident);
-  std::cout << "Parsing statement... " << print_token(peek().type) << "\n";
   consume(TOK_SEMICOLON, "expected token ';'");
 }
 
@@ -243,31 +243,49 @@ void Parser::parseValue(Token ident) {
 // Vec3 -> "Vec3" "{" ( (NUMBER | Identifier) ";" )*3 "}"
 Vec3 Parser::parseVec3() {
   vector<float> vec;
-  if (match(vector<TokenType>{TOK_VEC3, TOK_LBRACE})) {
-    advance();
-    // parse the 3 fields ( NUMBER | Identifier ) ";"
-    int i;
-    for (i = 0; i < 3; i++) {
-      if (check(TOK_NUMBER)) {
-        vec.push_back(parseNumber());
-        advance();
-      }
-      if (check(TOK_IDENT)) {
-        // get the value from the environment
-        ErrorMessage *err;
-        float lit = env.getNumber(peek(), err);
-        if (err) {
-          errors.push_back(*err);
-        } else {
-          vec.push_back(lit);
+  if (check(TOK_VEC3)) {
+    if (match(vector<TokenType>{TOK_VEC3, TOK_LBRACE})) {
+      advance();
+      // parse the 3 fields ( NUMBER | Identifier ) ";"
+      int i;
+      for (i = 0; i < 3; i++) {
+        if (check(TOK_NUMBER)) {
+          vec.push_back(parseNumber());
           advance();
         }
+        if (check(TOK_IDENT)) {
+          // get the value from the environment
+          ErrorMessage *err;
+          float lit = env.getNumber(peek(), err);
+          if (err) {
+            errors.push_back(*err);
+            synchronize();
+          } else {
+            vec.push_back(lit);
+            advance();
+          }
+        }
+        consume(TOK_SEMICOLON, "expected semicolon after expression");
       }
-      consume(TOK_SEMICOLON, "expected semicolon after expression");
+      consume(TOK_RBRACE, "expected right brace");
+      Vec3 ret = Vec3(vec.at(0), vec.at(1), vec.at(2));
+      return ret;
     }
-    consume(TOK_RBRACE, "expected right brace");
-    Vec3 ret = Vec3(vec.at(0), vec.at(1), vec.at(2));
-    return ret;
+    registerError("improper Vec3 formation");
+    synchronize();
+    return Vec3(-1, -1, -1);
+  }
+  if (check(TOK_IDENT)) {
+    ErrorMessage err;
+    Vec3 v = env.getVec3(peek(), &err);
+    if (err.row != -1) {
+      errors.push_back(err);
+      synchronize();
+      return Vec3(-1, -1, -1);
+    } else {
+      consume(TOK_SEMICOLON, "expected semicolon");
+      return v;
+    }
   }
   registerError("improper Vec3 formation");
   synchronize();

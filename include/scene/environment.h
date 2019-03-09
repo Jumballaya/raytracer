@@ -88,15 +88,15 @@ ErrorMessage* Environment::setVec3(Token ident, Vec3 v) {
   return NULL;
 }
 
-Vec3 Environment::getVec3(Token ident, ErrorMessage* err) {
+Vec3 Environment::getVec3(Token ident, ErrorMessage *err) {
   auto found = vec3s.find(ident.literal);
   if (found != vec3s.end()) {
-    err = NULL;
     return found->second;
   }
   ostringstream oss;
-  oss << "identifier " << ident.literal << " can't be found";
-  err->setMessage(oss.str());
+  oss << "identifier " << ident.literal << " can't be found" << std::endl;
+  string msg = oss.str();
+  err->setMessage(msg);
   err->setPos(ident.row, ident.column);
   return Vec3(-1, -1, -1);
 }
