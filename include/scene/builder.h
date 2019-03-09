@@ -20,12 +20,15 @@ class Builder {
   private:
     Parser      parser;
     Program     program;
+
+    std::vector<Token> tokens;
 };
 
 Builder::Builder(std::string fp) {
   std::string code = read_file(fp);
   Lexer lexer = Lexer(code, code.length());
-  parser.setTokens(lexer.tokens());
+  tokens = lexer.tokens();
+  parser.setTokens(tokens);
 }
 
 void Builder::run() {

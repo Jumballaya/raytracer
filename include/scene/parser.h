@@ -204,6 +204,7 @@ void Parser::parseValStatement() {
   Token ident = consume(TOK_IDENT, "expected identifier");
   consume(TOK_EQUAL, "expected token '='");
   parseValue(ident);
+  std::cout << "Parsing statement... " << print_token(peek().type) << "\n";
   consume(TOK_SEMICOLON, "expected token ';'");
 }
 
@@ -227,6 +228,7 @@ void Parser::parseValue(Token ident) {
   }
   if (check(TOK_NUMBER)) {
     float f = parseNumber();
+    advance();
     ErrorMessage* err = env.setNumber(ident, f);
     if (err) errors.push_back(*err);
     return;
@@ -242,10 +244,14 @@ void Parser::parseValue(Token ident) {
 Vec3 Parser::parseVec3() {
   vector<float> vec;
   if (match(vector<TokenType>{TOK_VEC3, TOK_LBRACE})) {
+    advance();
     // parse the 3 fields ( NUMBER | Identifier ) ";"
     int i;
     for (i = 0; i < 3; i++) {
-      if (check(TOK_NUMBER)) vec.push_back(parseNumber());
+      if (check(TOK_NUMBER)) {
+        vec.push_back(parseNumber());
+        advance();
+      }
       if (check(TOK_IDENT)) {
         // get the value from the environment
         ErrorMessage *err;
@@ -254,6 +260,7 @@ Vec3 Parser::parseVec3() {
           errors.push_back(*err);
         } else {
           vec.push_back(lit);
+          advance();
         }
       }
       consume(TOK_SEMICOLON, "expected semicolon after expression");
@@ -270,6 +277,7 @@ Vec3 Parser::parseVec3() {
 // Texture -> "Texture" ":" [type] "{" [fields] "}"
 Texture* Parser::parseTexture() {
   if (match(vector<TokenType>{TOK_TEXTURE, TOK_COLON})) {
+    advance();
     if (peek().type == TOK_CONSTANT) {
       advance();
       consume(TOK_LBRACE, "expected left brace after texture type");
