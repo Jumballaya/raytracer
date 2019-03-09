@@ -34,7 +34,7 @@ obj s1 = Sphere {
   Material: material;
 };
 
-Camera {
+obj c = Camera {
   Lookfrom: Vec3 { ten; 10; 10.0; };
   Lookat: lookat;
   Vfov: 40.0;

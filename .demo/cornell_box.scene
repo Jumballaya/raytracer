@@ -29,7 +29,7 @@ obj s1 = Sphere {
   Material: metal;
 };
 
-Camera {
+obj c = Camera {
   Lookfrom: Vec3 { 278; 278; -800; };
   Lookat: Vec3 { 278; 278; 0; };
   Vfov: 40.0;

@@ -59,7 +59,7 @@ obj moon = Sphere {
   Material: m_moon;
 };
 
-Camera {
+obj c = Camera {
   Lookfrom: Vec3 { 10; 2; 10; };
   Lookat: Vec3 { 0; 0; 0; };
   Vfov: 40.0;
