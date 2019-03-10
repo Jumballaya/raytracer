@@ -22,13 +22,23 @@ val lookAt = Vec3 { 0; 0; 0; };
 val color = Vec3 { 0.5; 0.5; 0.5; };
 
 val texture = Texture:Constant {
-  Color: Vec3 { 0.5; 0.5; 0.5; };
+  Color: color;
+};
+
+val material = Material:Lambertian {
+  Albedo: texture;
+};
+
+obj s1 = Sphere {
+  Radius: 0.5;
+  Center: center;
+  Material: material;
 };
 
 obj c = Camera {
-  Lookfrom: Vec3 { 10; 10; 10.0; };
-  Lookat: Vec3 { 0; 0; 0; };
+  LookFrom: Vec3 { ten; 10; 10.0; };
+  LookAt: lookat;
   Vfov: 40.0;
   Aperature: 0.0;
-  Focus: 10.0;
+  Focus: ten;
 };

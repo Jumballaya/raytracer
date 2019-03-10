@@ -14,6 +14,8 @@
 #include "error.h"
 #include "tokens.h"
 #include "raytracer/vec.h"
+#include "raytracer/material.h"
+#include "raytracer/texture.h"
 
 using std::string;
 using std::unordered_map;
@@ -21,18 +23,24 @@ using std::ostringstream;
 
 class Environment {
   private:
-    unordered_map<string, float>    numbers;
-    unordered_map<string, string>   strings;
-    unordered_map<string, Vec3>     vec3s;
+    unordered_map<string, float>     numbers;
+    unordered_map<string, string>    strings;
+    unordered_map<string, Vec3>      vec3s;
+    unordered_map<string, Texture*>  textures;
+    unordered_map<string, Material*> materials;
 
   public:
-    ErrorMessage* setNumber(Token ident, float f);
-    ErrorMessage* setString(Token ident, string s);
-    ErrorMessage* setVec3(Token ident, Vec3 v);
+    ErrorMessage*  setNumber(Token ident, float f);
+    ErrorMessage*  setString(Token ident, string s);
+    ErrorMessage*  setVec3(Token ident, Vec3 v);
+    ErrorMessage*  setTexture(Token ident, Texture* t);
+    ErrorMessage*  setMaterial(Token ident, Material* m);
 
-    float   getNumber(Token ident, ErrorMessage *err);
-    string  getString(Token ident, ErrorMessage *err);
-    Vec3    getVec3(Token ident, ErrorMessage *err);
+    float      getNumber(Token ident, ErrorMessage *err);
+    string     getString(Token ident, ErrorMessage *err);
+    Vec3       getVec3(Token ident, ErrorMessage *err);
+    Texture*   getTexture(Token ident, ErrorMessage *err);
+    Material*  getMaterial(Token ident, ErrorMessage *err);
 };
 
 ErrorMessage* Environment::setNumber(Token ident, float f) {
@@ -113,7 +121,7 @@ ErrorMessage* Environment::setString(Token ident, string s) {
   } else {
     bool succeed = strings.insert(std::make_pair(ident.literal, s)).second;
     if (!succeed) {
-      err->setMessage("error setting float value");
+      err->setMessage("error setting string value");
       err->setPos(ident.row, ident.column);
       return err;
     }
@@ -134,5 +142,70 @@ string Environment::getString(Token ident, ErrorMessage* err) {
   return "";
 }
 
+ErrorMessage* Environment::setTexture(Token ident, Texture* t) {
+  ErrorMessage* err;
+  auto found = textures.find(ident.literal);
+  if (found != textures.end()) {
+    ostringstream oss;
+    oss << "identifier " << ident.literal << " has already been used";
+    err->setMessage(oss.str());
+    err->setPos(ident.row, ident.column);
+    return err;
+  } else {
+    bool succeed = textures.insert(std::make_pair(ident.literal, t)).second;
+    if (!succeed) {
+      err->setMessage("error setting texture value");
+      err->setPos(ident.row, ident.column);
+      return err;
+    }
+  }
+  return NULL;
+}
+
+Texture* Environment::getTexture(Token ident, ErrorMessage* err) {
+  auto found = textures.find(ident.literal);
+  if (found != textures.end()) {
+    err = NULL;
+    return found->second;
+  }
+  ostringstream oss;
+  oss << "identifier " << ident.literal << " can't be found";
+  err->setMessage(oss.str());
+  err->setPos(ident.row, ident.column);
+  return NULL;
+}
+
+ErrorMessage* Environment::setMaterial(Token ident, Material* m) {
+  ErrorMessage* err;
+  auto found = materials.find(ident.literal);
+  if (found != materials.end()) {
+    ostringstream oss;
+    oss << "identifier " << ident.literal << " has already been used";
+    err->setMessage(oss.str());
+    err->setPos(ident.row, ident.column);
+    return err;
+  } else {
+    bool succeed = materials.insert(std::make_pair(ident.literal, m)).second;
+    if (!succeed) {
+      err->setMessage("error setting material value");
+      err->setPos(ident.row, ident.column);
+      return err;
+    }
+  }
+  return NULL;
+}
+
+Material* Environment::getMaterial(Token ident, ErrorMessage* err) {
+  auto found = materials.find(ident.literal);
+  if (found != materials.end()) {
+    err = NULL;
+    return found->second;
+  }
+  ostringstream oss;
+  oss << "identifier " << ident.literal << " can't be found";
+  err->setMessage(oss.str());
+  err->setPos(ident.row, ident.column);
+  return NULL;
+}
 
 #endif

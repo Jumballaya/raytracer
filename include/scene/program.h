@@ -16,6 +16,7 @@
 #include "raytracer/scene.h"
 #include "raytracer/camera.h"
 #include "raytracer/hitable_list.h"
+#include "raytracer/sphere.h"
 
 
 struct camera_data {
@@ -50,7 +51,7 @@ class Program {
     Hitable_List world;
 
     // Interact with the raytracer API
-    void addObject(Hitable* object);
+    void addSphere(Sphere* s);
     void alignCamera();
     void setCamera(Vec3 lookfrom, Vec3 lookat, Vec3 vup, float vfov, float aperture, float focus_dist);
     void setMacro(std::string macro, float value);
@@ -67,8 +68,8 @@ class Program {
     }
 };
 
-void Program::addObject(Hitable* object) {
-  world.append(object);
+void Program::addSphere(Sphere* s) {
+  world.append(s);
 }
 
 void Program::setCamera(Vec3 lookfrom, Vec3 lookat, Vec3 vup, float vfov, float aperature, float focus_dist) {

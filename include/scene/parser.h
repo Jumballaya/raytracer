@@ -92,7 +92,7 @@ class Parser {
     //Material*     parseMDiffuseLight();
     //Material*     parseMIsotropic();
 
-    void      parseSphere(Hitable* h);
+    void      parseSphere();
     //Box       parseBox();
 
 };
@@ -172,7 +172,6 @@ void Parser::parseStatement() {
   if (check(TOK_VAL)) return parseValStatement();
   if (check(TOK_MACRO)) return parseMacroStatement();
   advance();
-  synchronize();
 }
 
 // ObjStmt -> "obj" Identifier "=" Expression ";"
@@ -187,9 +186,7 @@ void Parser::parseObjStatement() {
 // Object -> Sphere | Box
 void Parser::parseObject(Token ident) {
   if (check(TOK_SPHERE)) {
-    Hitable *h;
-    parseSphere(h);
-    program.addObject(h);
+    parseSphere();
     return;
   }
   if (check(TOK_CAMERA)) {
@@ -218,12 +215,14 @@ void Parser::parseValue(Token ident) {
   }
   if (check(TOK_TEXTURE)) {
     Texture *t = parseTexture();
-    // Add val to environment with the identifier name
+    ErrorMessage* err = env.setTexture(ident, t);
+    if (err) errors.push_back(*err);
     return;
   }
   if (check(TOK_MATERIAL)) {
     Material *m = parseMaterial();
-    // Add val to environment with the identifier name
+    ErrorMessage* err = env.setMaterial(ident, m);
+    if (err) errors.push_back(*err);
     return;
   }
   if (check(TOK_NUMBER)) {
@@ -278,12 +277,12 @@ Vec3 Parser::parseVec3() {
   if (check(TOK_IDENT)) {
     ErrorMessage err;
     Vec3 v = env.getVec3(peek(), &err);
+    advance();
     if (err.row != -1) {
       errors.push_back(err);
       synchronize();
       return Vec3(-1, -1, -1);
     } else {
-      consume(TOK_SEMICOLON, "expected semicolon");
       return v;
     }
   }
@@ -294,13 +293,27 @@ Vec3 Parser::parseVec3() {
 
 // Texture -> "Texture" ":" [type] "{" [fields] "}"
 Texture* Parser::parseTexture() {
-  if (match(vector<TokenType>{TOK_TEXTURE, TOK_COLON})) {
-    advance();
-    if (peek().type == TOK_CONSTANT) {
+  if (check(TOK_TEXTURE)) {
+    if (match(vector<TokenType>{TOK_TEXTURE, TOK_COLON})) {
       advance();
-      consume(TOK_LBRACE, "expected left brace after texture type");
-      Texture* t = parseTConstant();
-      consume(TOK_RBRACE, "expected right brace after texture declaration");
+      if (peek().type == TOK_CONSTANT) {
+        advance();
+        consume(TOK_LBRACE, "expected left brace after texture type");
+        Texture* t = parseTConstant();
+        consume(TOK_RBRACE, "expected right brace after texture declaration");
+        return t;
+      }
+    }
+  }
+  if (check(TOK_IDENT)) {
+    ErrorMessage err;
+    Texture* t = env.getTexture(peek(), &err);
+    advance();
+    if (err.row != -1) {
+      errors.push_back(err);
+      synchronize();
+      return NULL;
+    } else {
       return t;
     }
   }
@@ -328,12 +341,27 @@ Texture* Parser::parseTConstant() {
 
 // Material -> "Material" ":" [type] "{" [fields] "}"
 Material* Parser::parseMaterial() {
-  if (match(vector<TokenType>{TOK_MATERIAL, TOK_COLON})) {
-    if (peek().type == TOK_LAMBERTIAN) {
+  if (check(TOK_MATERIAL)) {
+    if (match(vector<TokenType>{TOK_MATERIAL, TOK_COLON})) {
       advance();
-      consume(TOK_LBRACE, "expected left brace after material type");
-      Material* m = parseMLambertian();
-      consume(TOK_RBRACE, "expected right brace after material declaration");
+      if (peek().type == TOK_LAMBERTIAN) {
+        advance();
+        consume(TOK_LBRACE, "expected left brace after material type");
+        Material* m = parseMLambertian();
+        consume(TOK_RBRACE, "expected right brace after material declaration");
+        return m;
+      }
+    }
+  }
+  if (check(TOK_IDENT)) {
+    ErrorMessage err;
+    Material* m = env.getMaterial(peek(), &err);
+    advance();
+    if (err.row != -1) {
+      errors.push_back(err);
+      synchronize();
+      return NULL;
+    } else {
       return m;
     }
   }
@@ -400,6 +428,7 @@ void Parser::parseMacro(Token ident) {
 //            "}"
 void Parser::parseCamera() {
   if (match(vector<TokenType>{TOK_CAMERA, TOK_LBRACE})) {
+    advance();
     Vec3 lf, la;
     float v, a, f;
     while (peek().type != TOK_RBRACE && !isAtEnd()) {
@@ -418,16 +447,19 @@ void Parser::parseCamera() {
           advance();
           consume(TOK_COLON, "expected token ':'");
           v = parseNumber();
+          advance();
           consume(TOK_SEMICOLON, "expected token ';'");
         } else if (peek().literal == "Aperature") {
           advance();
           consume(TOK_COLON, "expected token ':'");
           a = parseNumber();
+          advance();
           consume(TOK_SEMICOLON, "expected token ';'");
         } else if (peek().literal == "Focus") {
           advance();
           consume(TOK_COLON, "expected token ':'");
           f = parseNumber();
+          advance();
           consume(TOK_SEMICOLON, "expected token ';'");
         }
       } else {
@@ -435,6 +467,7 @@ void Parser::parseCamera() {
       }
     }
     program.setCamera(lf, la, Vec3(0, 1, 0), v, a, f);
+    advance();
     return;
   }
   // error message
@@ -447,34 +480,41 @@ void Parser::parseCamera() {
 //              "Center" ":" ( Vec3 | Identifier ) ";"
 //              "Material" ":" ( Material | Identifier ) ";"
 //            "}"
-void Parser::parseSphere(Hitable* h) {
-  if (match(vector<TokenType>{TOK_SPHERE, TOK_LBRACE})) {
-    float r;
-    Vec3 c;
-    Material* m;
-    while (peek().type != TOK_RBRACE && !isAtEnd()) {
-      if (check(TOK_IDENT)) {
-        if (peek().literal == "Radius") {
-          advance();
-          consume(TOK_COLON, "expected token ':'");
-          r = parseNumber();
-          consume(TOK_SEMICOLON, "expected token ';'");
-        } else if (peek().literal == "Center") {
-          advance();
-          consume(TOK_COLON, "expected token ':'");
-          c = parseVec3();
-          consume(TOK_SEMICOLON, "expected token ';'");
-        } else if (peek().literal == "Material") {
-          advance();
-          consume(TOK_COLON, "expected token ':'");
-          m = parseMaterial();
-          consume(TOK_SEMICOLON, "expected token ';'");
+void Parser::parseSphere() {
+  if (check(TOK_SPHERE)) {
+    if (match(vector<TokenType>{TOK_SPHERE, TOK_LBRACE})) {
+      advance();
+      float r;
+      Vec3 c;
+      Material* m;
+      while (peek().type != TOK_RBRACE && !isAtEnd()) {
+        if (check(TOK_IDENT) || check(TOK_MATERIAL)) {
+          if (peek().literal == "Radius") {
+            advance();
+            consume(TOK_COLON, "expected token ':'");
+            r = parseNumber();
+            advance();
+            consume(TOK_SEMICOLON, "expected token ';'");
+          } else if (peek().literal == "Center") {
+            advance();
+            consume(TOK_COLON, "expected token ':'");
+            c = parseVec3();
+            consume(TOK_SEMICOLON, "expected token ';'");
+          } else if (peek().literal == "Material") {
+            advance();
+            consume(TOK_COLON, "expected token ':'");
+            m = parseMaterial();
+            consume(TOK_SEMICOLON, "expected token ';'");
+          }
+        } else {
+          synchronize();
         }
-      } else {
-        synchronize();
       }
+      Sphere *s = new Sphere(c, r, m);
+      program.addSphere(s);
+      consume(TOK_RBRACE, "expected right brace");
+      return;
     }
-    h = new Sphere(c, r, m);
   }
   // error message
   registerError("improper Sphere formation");
