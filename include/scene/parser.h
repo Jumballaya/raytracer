@@ -15,9 +15,7 @@
 
 #include "lexer.h"
 #include "program.h"
-#include "expression.h"
 #include "environment.h"
-#include "statement.h"
 #include "file.h"
 #include "error.h"
 
