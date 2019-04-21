@@ -63,6 +63,7 @@ std::string Scene::render() {
   output +=  std::to_string(ny);
   output +=  "\n255\n";
 
+
   // Body
   for (int j = ny-1; j >= 0; j--) {
     for (int i = 0; i < nx; i++) {

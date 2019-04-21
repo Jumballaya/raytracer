@@ -35,8 +35,8 @@ obj s1 = Sphere {
 };
 
 obj c = Camera {
-  Lookfrom: Vec3 { ten; 10; 10.0; };
-  Lookat: lookat;
+  LookFrom: Vec3 { ten; 10; 10.0; };
+  LookAt: lookat;
   Vfov: 40.0;
   Aperature: 0.0;
   Focus: ten;

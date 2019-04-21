@@ -152,7 +152,7 @@ void Parser::synchronize() {
   advance();
 
   while (!isAtEnd()) {
-    if (previous().type == TOK_SEMICOLON) return;
+    if (tokens.at(current + 1).type == TOK_SEMICOLON) return;
     advance();
   }
 };
@@ -391,10 +391,13 @@ float Parser::parseNumber() {
     string::size_type sz;
     return stof(peek().literal, &sz);
   }
-  ErrorMessage* err;
-  float ret = env.getNumber(peek(), err);
-  if (err) errors.push_back(*err);
-  return ret;
+  if (peek().type == TOK_IDENT) {
+    ErrorMessage* err;
+    float ret = env.getNumber(peek(), err);
+    if (err) errors.push_back(*err);
+    return 1.0;
+  }
+  return -0.1;
 }
 
 // MacroStmt -> "%" Identifier ( NUMBER | STRING )
@@ -459,6 +462,8 @@ void Parser::parseCamera() {
           f = parseNumber();
           advance();
           consume(TOK_SEMICOLON, "expected token ';'");
+        } else {
+          advance();
         }
       } else {
         synchronize();
@@ -503,6 +508,8 @@ void Parser::parseSphere() {
             consume(TOK_COLON, "expected token ':'");
             m = parseMaterial();
             consume(TOK_SEMICOLON, "expected token ';'");
+          } else {
+            advance();
           }
         } else {
           synchronize();
