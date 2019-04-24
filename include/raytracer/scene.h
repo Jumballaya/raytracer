@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "hitable_list.h"
 #include "material.h"
+#include <math.h>
 
 
 class Scene {

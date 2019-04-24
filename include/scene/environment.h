@@ -13,9 +13,9 @@
 #include <sstream>
 #include "error.h"
 #include "tokens.h"
-#include "raytracer/vec.h"
-#include "raytracer/material.h"
-#include "raytracer/texture.h"
+#include "vec.h"
+#include "material.h"
+#include "texture.h"
 
 using std::string;
 using std::unordered_map;

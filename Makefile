@@ -1,33 +1,52 @@
-######
-#
-#
-#
-######
-RM := rm
+PRODUCT := raytrace
+BINDIR  := ./bin
+INCDIR  := ./include
+INCDIR_EXT := ./external_includes
+LIBDIR	:= ./libs
+SRCDIR  := ./src
+OBJDIR  := ./obj
 
-PATH_D = bin
-PATH_I = include
-PATH_S = src
+MKDIR_P = mkdir -p
 
-MAIN_SRC = main.cpp
-API_SRC = api.cpp
-OBJS = $(wildcard src/*.cpp)
-CC = g++
-C_FLAGS = -w
-L_FLAGS =
-INC = -I./$(PATH_I)
+CXX := g++
+LINKER := g++
+INCLUDES := -I$(INCDIR) -I$(INCDIR_EXT) -I./
+LIBRARIES := -L$(LIBDIR)
+CXXFLAGS := -O3 -Wall -Wextra -std=c++11 -MMD -MP -ffunction-sections -fdata-sections -flto
 
-BINARY = raytrace
+# Finds all .cpp files and puts them into SRC
+SRC := $(wildcard $(SRCDIR)/*.cpp)
+# Creates .o files for every .cpp file in SRC (patsubst is pattern substitution)
+OBJ := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
+# Creates .d files (dependencies) for every .cpp file in SRC
+DEP := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SRC))
+# Finds all lib*.a files and puts them into LIB
+LIB := $(wildcard $(LIBDIR)/lib*.a)
 
-build: $(MAIN_SRC) $(OBJS)
-	mkdir -p $(PATH_D)
-	$(CC) $^ $(C_FLAGS) $(L_FLAGS) -o $(PATH_D)/$(BINARY) $(INC)
 
-api: $(API_SRC) $(OBJS)
-	mkdir -p $(PATH_D)
-	$(CC) $^ $(C_FLAGS) $(L_FLAGS) -o $(PATH_D)/api $(INC)
+# $^ is list of dependencies and $@ is the target file
+# Link all the object files or make a library
+$(BINDIR)/$(PRODUCT): directories $(OBJ) $(LIB)
+# 	Make a library
+#	ar rcs $(BINDIR)/$(PRODUCT) $(OBJ) $(LIB)
+#	Make a program
+	$(LINKER) -Wl,--gc-sections $(CXXFLAGS) $(OBJ) $(LIB) -o $@
+
+# Compile individual .cpp source files into object files
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+
+-include $(DEP)
+
+.PHONY: directories
+
+directories: $(OBJDIR)
+
+$(OBJDIR):
+	$(MKDIR_P) $(OBJDIR)
+
+.PHONY: clean
 
 clean:
-	rm -rf $(PATH_D)
-
-.PHONY: build api clean
+	rm -f $(OBJDIR)/* $(PRODUCT)

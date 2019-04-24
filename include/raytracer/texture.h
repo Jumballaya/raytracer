@@ -2,7 +2,7 @@
 #define TEXTURE_H
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stbi/stb_image.h"
+#include "include/stbi/stb_image.h"
 
 #include "perlin.h"
 
