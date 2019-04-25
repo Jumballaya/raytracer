@@ -1,7 +1,7 @@
 #ifndef HITABLE_LIST_H
 #define HITABLE_LIST_H
 
-#include "raytracer/hitable.h"
+#include "hitable.h"
 
 class Hitable_List: public Hitable {
   public:

@@ -1,7 +1,11 @@
+#
+# Makefile from https://github.com/TheLandfill/cpp_init
+#
+
 PRODUCT := raytrace
 BINDIR  := ./bin
 INCDIR  := ./include
-INCDIR_EXT := ./external_includes
+INCDIR_EXT := ./external_include
 LIBDIR	:= ./libs
 SRCDIR  := ./src
 OBJDIR  := ./obj
@@ -15,9 +19,9 @@ LIBRARIES := -L$(LIBDIR)
 CXXFLAGS := -O3 -Wall -Wextra -std=c++11 -MMD -MP -ffunction-sections -fdata-sections -flto
 
 # Finds all .cpp files and puts them into SRC
-SRC := $(wildcard $(SRCDIR)/*.cpp)
+SRC := $(wildcard $(SRCDIR)/**/*.cpp)
 # Creates .o files for every .cpp file in SRC (patsubst is pattern substitution)
-OBJ := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
+OBJ := $(patsubst $(SRCDIR)/**/%.cpp,$(OBJDIR)/%.o,$(SRC))
 # Creates .d files (dependencies) for every .cpp file in SRC
 DEP := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SRC))
 # Finds all lib*.a files and puts them into LIB

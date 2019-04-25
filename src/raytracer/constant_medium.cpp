@@ -1,4 +1,4 @@
-#include "raytracer/constant_medium.h"
+#include "../../include/raytracer/constant_medium.h"
 
 Constant_Medium::Constant_Medium(Hitable *b, float d, Texture *a) : boundary(b), density(d) {
   phase_function = new material::isotropic(a);

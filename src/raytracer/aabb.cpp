@@ -1,4 +1,4 @@
-#include "raytracer/aabb.h"
+#include "../../include/raytracer/aabb.h"
 
 bool AABB::hit(const Ray& r, float t_min, float t_max) const {
   for (int a = 0; a < 3; a++) {

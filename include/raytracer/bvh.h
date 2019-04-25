@@ -1,7 +1,7 @@
 #ifndef BVH_H
 #define BVH_H
 
-#include "raytracer/hitable.h"
+#include "hitable.h"
 
 class BVH_Node: public Hitable {
   BVH_Node() {}

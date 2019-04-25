@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "raytracer/ray.h"
+#include "ray.h"
 
 Vec3 rand_vec_disk();
 

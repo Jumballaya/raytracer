@@ -1,4 +1,4 @@
-#include "raytracer/hitable.h"
+#include "../../include/raytracer/hitable.h"
 
 void get_sphere_uv(const Vec3& p, float& u, float& v) {
   float phi = atan2(p.z(), p.x());

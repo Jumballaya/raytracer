@@ -1,4 +1,4 @@
-#include "raytracer/box.h"
+#include "../../include/raytracer/box.h"
 
 Box::Box(const Vec3& p0, const Vec3& p1, Material *material) {
   pmin = p0;

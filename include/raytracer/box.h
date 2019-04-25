@@ -1,8 +1,8 @@
 #ifndef BOX_H
 #define BOX_H
 
-#include "raytracer/hitable_list.h"
-#include "raytracer/rect.h"
+#include "hitable_list.h"
+#include "rect.h"
 
 class Box : public Hitable {
   public:

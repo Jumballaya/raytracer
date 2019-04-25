@@ -1,4 +1,4 @@
-#include "raytracer/hitable_list.h"
+#include "../../include/raytracer/hitable_list.h"
 
 Hitable_List::Hitable_List() {
   list_size = 0;

@@ -2,8 +2,8 @@
 #define HITABLE_H
 
 #include <float.h>
-#include "raytracer/aabb.h"
-#include "raytracer/material.h"
+#include "aabb.h"
+#include "material.h"
 
 struct hit_record {
   float    t;

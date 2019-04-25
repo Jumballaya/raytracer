@@ -1,4 +1,4 @@
-#include "raytracer/camera.h"
+#include "../../include/raytracer/camera.h"
 
 Camera::Camera(Vec3 lookfrom, Vec3 lookat, Vec3 vup, float vfov, float aspect, float aperture, float focus_dist, float t0, float t1) {
   time0 = t0;

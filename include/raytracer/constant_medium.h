@@ -2,9 +2,9 @@
 #define CONSTANT_MEDIUM_H
 
 #include <float.h>
-#include "raytracer/hitable.h"
-#include "raytracer/texture.h"
-#include "raytracer/material.h"
+#include "hitable.h"
+#include "texture.h"
+#include "material.h"
 
 class Constant_Medium : public Hitable  {
   public:

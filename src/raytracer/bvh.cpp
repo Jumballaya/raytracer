@@ -1,4 +1,4 @@
-#include "raytracer/bvh.h"
+#include "../../include/raytracer/bvh.h"
 
 bool BVH_Node::bounding_box(float t0, float t1, AABB& b) const {
   b = box;

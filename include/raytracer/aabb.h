@@ -1,8 +1,8 @@
 #ifndef AABB_H
 #define AABB_H
 
-#include "raytracer/ray.h"
-#include "raytracer/hitable.h"
+#include "ray.h"
+#include "hitable.h"
 
 inline float ffmin(float a, float b) { return a < b ? a : b; }
 inline float ffmax(float a, float b) { return a > b ? a : b; }
